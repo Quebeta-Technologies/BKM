@@ -4,15 +4,15 @@ import { LETTERS } from "../data.js";
 
 function Confetti({ active }) {
   if (!active) return null;
-  const pieces = Array.from({ length: 28 }, (_, i) => ({
+  const pieces = Array.from({ length: 32 }, (_, i) => ({
     id: i,
-    x: (Math.random() - 0.5) * 300,
-    y: -(80 + Math.random() * 160),
+    x: (Math.random() - 0.5) * 320,
+    y: -(60 + Math.random() * 180),
     rot: Math.random() * 720,
     color: ["#F4C77B","#F08FA8","#C3A6F0","#FBD5DE","#fff"][Math.floor(Math.random() * 5)],
-    size: 5 + Math.random() * 7,
-    dur: 0.8 + Math.random() * 0.7,
-    delay: Math.random() * 0.3,
+    size: 5 + Math.random() * 8,
+    dur: 0.7 + Math.random() * 0.8,
+    delay: Math.random() * 0.35,
     shape: Math.random() > 0.5 ? "circle" : "rect",
   }));
   return (
@@ -20,7 +20,7 @@ function Confetti({ active }) {
       {pieces.map((p) => (
         <div key={p.id} style={{
           position: "absolute",
-          width: p.shape === "circle" ? p.size : p.size * 1.4,
+          width: p.shape === "circle" ? p.size : p.size * 1.5,
           height: p.size,
           borderRadius: p.shape === "circle" ? "50%" : 2,
           background: p.color,
@@ -59,45 +59,52 @@ export default function Letters({ onOpen }) {
 
   const openLetter = (letter) => {
     setConfetti(letter.id);
-    setTimeout(() => setConfetti(null), 1200);
+    setTimeout(() => setConfetti(null), 1400);
     onOpen(letter);
   };
 
   return (
-    <section className="px-6 py-24 md:py-32 max-w-5xl mx-auto"
+    <section style={{ padding: "3rem 1.5rem", maxWidth: 900, margin: "0 auto" }}
       onMouseMove={onDragMove} onMouseUp={endDrag}
       onTouchMove={onDragMove} onTouchEnd={endDrag}>
       <Reveal className="text-center">
-        <p className="eyebrow mb-6">Chapter three</p>
-        <h2 className="display text-4xl md:text-6xl mb-4">Letters, sealed for you</h2>
-        <p className="soft max-w-md mx-auto text-sm md:text-base">Open one now. Save the rest for when you need them.</p>
-        <p className="soft text-xs mt-2 opacity-50">drag them around · click to open</p>
+        <p className="eyebrow mb-4">Chapter three</p>
+        <h2 className="display mb-3" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+          Letters, sealed for you
+        </h2>
+        <p className="soft max-w-md mx-auto text-sm">
+          Open one now. Save the rest for when you need them.
+        </p>
+        <p className="soft text-xs mt-1 opacity-50">drag them · click to open</p>
       </Reveal>
 
-      <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+      <div style={{
+        marginTop: 32,
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: 20,
+      }}>
         {LETTERS.map((letter, i) => {
           const pos = positions[letter.id] || { x: 0, y: 0 };
           const isDragging = dragging === letter.id;
           return (
-            <Reveal key={letter.id} delay={i * 120}>
+            <Reveal key={letter.id} delay={i * 100}>
               <div style={{ position: "relative" }}>
-                <div
-                  className="env"
-                  style={{
-                    aspectRatio: "1.5 / 1",
-                    transform: `translate(${pos.x}px, ${pos.y}px) rotate(${isDragging ? 4 : 0}deg) ${isDragging ? "scale(1.06)" : ""}`,
-                    transition: isDragging ? "none" : "transform 0.4s cubic-bezier(.2,.8,.3,1), box-shadow 0.4s",
-                    boxShadow: isDragging ? "0 30px 70px -20px rgba(240,143,168,0.6)" : undefined,
-                    cursor: isDragging ? "grabbing" : "grab",
-                    zIndex: isDragging ? 20 : 1, position: "relative",
-                  }}
+                <div className="env" style={{
+                  aspectRatio: "1.5 / 1",
+                  transform: `translate(${pos.x}px, ${pos.y}px) rotate(${isDragging ? 5 : 0}deg) ${isDragging ? "scale(1.07)" : ""}`,
+                  transition: isDragging ? "none" : "transform 0.4s cubic-bezier(.2,.8,.3,1), box-shadow 0.4s",
+                  boxShadow: isDragging ? "0 30px 70px -20px rgba(240,143,168,0.65)" : undefined,
+                  cursor: isDragging ? "grabbing" : "grab",
+                  zIndex: isDragging ? 20 : 1,
+                  position: "relative",
+                }}
                   tabIndex={0} role="button"
                   aria-label={`Open letter: ${letter.seal}`}
                   onMouseDown={(e) => startDrag(e, letter.id)}
                   onTouchStart={(e) => startDrag(e, letter.id)}
                   onClick={() => !isDragging && openLetter(letter)}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), openLetter(letter))}
-                >
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), openLetter(letter))}>
                   <div className="flap" />
                   <div className="seal">♥</div>
                   <div className="env-cap">{letter.seal}</div>

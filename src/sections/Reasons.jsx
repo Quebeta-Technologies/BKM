@@ -17,7 +17,7 @@ export default function Reasons({ burst }) {
       setFlipped(false);
       setAnimKey((k) => k + 1);
     }, 280);
-    if (e) burst(e.clientX, e.clientY, 5);
+    if (e) burst(e.clientX, e.clientY, 6);
   };
 
   const handleTouchStart = (e) => { touchStart.current = e.touches[0].clientX; };
@@ -29,54 +29,52 @@ export default function Reasons({ burst }) {
   };
 
   return (
-    <section className="px-6 py-24 md:py-32 max-w-3xl mx-auto text-center">
+    <section style={{ padding: "3rem 1.5rem", maxWidth: 680, margin: "0 auto", textAlign: "center" }}>
       <Reveal>
-        <p className="eyebrow mb-6">Chapter four</p>
-        <h2 className="display text-4xl md:text-6xl mb-4">Reasons, drawn at random</h2>
-        <p className="soft max-w-md mx-auto text-sm md:text-base">
+        <p className="eyebrow mb-4">Chapter four</p>
+        <h2 className="display mb-3" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+          Reasons, drawn at random
+        </h2>
+        <p className="soft text-sm max-w-sm mx-auto">
           There are {REASONS.length} in here. There are more than {REASONS.length} in me.
         </p>
-        <p className="soft text-xs mt-2 opacity-50">swipe left/right or use the arrows</p>
+        <p className="soft text-xs mt-1 opacity-50">swipe left/right · use arrows</p>
       </Reveal>
 
-      <Reveal delay={180}>
-        <div style={{ perspective: 800, marginTop: 48 }}
+      <Reveal delay={160}>
+        {/* 3D flip card */}
+        <div style={{ perspective: 900, marginTop: 28 }}
           onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           <div key={animKey} style={{
             transformStyle: "preserve-3d",
             animation: flipped ? "cardFlipOut 0.28s ease-in forwards" : "cardFlipIn 0.35s ease-out",
           }}>
-            <div className="card3d px-8 py-14 md:px-14 md:py-20">
-              <p className="gold text-xs tracking-widest mb-6">
+            <div className="card3d" style={{ padding: "3rem 2.5rem" }}>
+              <p className="gold text-xs tracking-widest mb-5">
                 NO.&nbsp;{String(index + 1).padStart(2, "0")}
-                <span className="opacity-40 ml-3">/ {REASONS.length}</span>
+                <span style={{ opacity: 0.35, marginLeft: 10 }}>/ {REASONS.length}</span>
               </p>
-              <p className="display text-2xl md:text-4xl leading-snug">{REASONS[index]}</p>
+              <p className="display leading-snug" style={{ fontSize: "clamp(1.3rem, 3vw, 2rem)" }}>
+                {REASONS[index]}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-6 mt-10">
-          <button className="btn" style={{ padding: "12px 20px", fontSize: "1.1rem" }}
+        {/* Arrows */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 24 }}>
+          <button className="btn" style={{ padding: "11px 18px", fontSize: "1rem" }}
             onClick={(e) => go(-1, e)} aria-label="Previous">←</button>
           <button className="btn" onClick={(e) => go(1, e)}>Draw another</button>
-          <button className="btn" style={{ padding: "12px 20px", fontSize: "1.1rem" }}
+          <button className="btn" style={{ padding: "11px 18px", fontSize: "1rem" }}
             onClick={(e) => go(1, e)} aria-label="Next">→</button>
         </div>
 
-        <div className="flex justify-center gap-2 mt-6 flex-wrap" style={{ maxWidth: 300, margin: "24px auto 0" }}>
+        {/* Progress dots */}
+        <div style={{
+          display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap",
+          maxWidth: 280, margin: "16px auto 0",
+        }}>
           {REASONS.map((_, i) => (
             <div key={i} onClick={() => { setIndex(i); setAnimKey((k) => k + 1); }}
               style={{
-                width: i === index ? 18 : 6, height: 6, borderRadius: 3,
-                background: i === index ? "var(--rose)" : "rgba(255,255,255,0.2)",
-                cursor: "pointer", transition: "all 0.3s ease",
-              }} />
-          ))}
-        </div>
-
-        <p className="soft text-xs mt-5 opacity-60 tracking-widest">{drawn} drawn so far</p>
-      </Reveal>
-    </section>
-  );
-}

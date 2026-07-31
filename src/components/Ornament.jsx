@@ -2,9 +2,9 @@ import React from "react";
 
 export default function Ornament() {
   return (
-    <div className="hr-orn my-8" aria-hidden="true">
+    <div className="hr-orn" aria-hidden="true" style={{ margin: "0.4rem 0" }}>
       <s />
-      <span className="rose text-xs">&#10022;</span>
+      <span className="rose" style={{ fontSize: "0.65rem" }}>✦</span>
       <s className="r" />
     </div>
   );

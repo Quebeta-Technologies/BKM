@@ -19,12 +19,12 @@ function Sparkles({ x, y, active }) {
   const [parts, setParts] = useState([]);
   useEffect(() => {
     if (!active) return;
-    const p = Array.from({ length: 12 }, (_, i) => ({
+    const p = Array.from({ length: 14 }, (_, i) => ({
       id: i,
-      angle: (i / 12) * Math.PI * 2,
-      dist: 30 + Math.random() * 40,
+      angle: (i / 14) * Math.PI * 2,
+      dist: 28 + Math.random() * 45,
       size: 2 + Math.random() * 3,
-      dur: 0.6 + Math.random() * 0.5,
+      dur: 0.5 + Math.random() * 0.6,
     }));
     setParts(p);
     const t = setTimeout(() => setParts([]), 1200);
@@ -34,12 +34,7 @@ function Sparkles({ x, y, active }) {
   return (
     <>
       {parts.map((p) => (
-        <circle
-          key={p.id}
-          cx={x}
-          cy={y}
-          r={p.size}
-          fill="#F4C77B"
+        <circle key={p.id} cx={x} cy={y} r={p.size} fill="#F4C77B"
           style={{
             animation: `sparkOut ${p.dur}s ease-out forwards`,
             "--tx": `${Math.cos(p.angle) * p.dist}px`,
@@ -52,7 +47,7 @@ function Sparkles({ x, y, active }) {
 }
 
 export default function Constellation() {
-  const [ref, on] = useReveal(0.2);
+  const [ref, on] = useReveal(0.15);
   const [selected, setSelected] = useState(MILESTONES[0].id);
   const [sparked, setSparked] = useState(null);
 
@@ -68,17 +63,19 @@ export default function Constellation() {
   };
 
   return (
-    <section className="px-6 py-24 md:py-32 max-w-5xl mx-auto">
+    <section style={{ padding: "3rem 1.5rem", maxWidth: 900, margin: "0 auto" }}>
       <Reveal className="text-center">
-        <p className="eyebrow mb-6">Chapter one</p>
-        <h2 className="display text-4xl md:text-6xl mb-4">The constellation of us</h2>
-        <p className="soft max-w-md mx-auto text-sm md:text-base leading-relaxed">
+        <p className="eyebrow mb-4">Chapter one</p>
+        <h2 className="display mb-3" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
+          The constellation of us
+        </h2>
+        <p className="soft max-w-md mx-auto text-sm leading-relaxed mb-1">
           {MILESTONES.length} dates. {MILESTONES.length} stars. Touch one.
         </p>
       </Reveal>
 
-      <div ref={ref} className={`cons ${on ? "on" : ""} mt-12`}>
-        <svg viewBox="0 0 800 400" className="w-full" role="group" aria-label="Constellation of our milestone dates">
+      <div ref={ref} className={`cons ${on ? "on" : ""}`} style={{ marginTop: 32 }}>
+        <svg viewBox="0 0 800 400" className="w-full" role="group">
           <defs>
             <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
               <stop offset="0%" stopColor="#F08FA8" stopOpacity=".35" />
@@ -90,18 +87,18 @@ export default function Constellation() {
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
             <filter id="glow2" x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="10" result="b" />
+              <feGaussianBlur stdDeviation="12" result="b" />
               <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
             </filter>
           </defs>
 
           <path d={buildPath(MILESTONES)} className="cons-line" />
           <path
-            d={`M ${last.x} ${last.y} C ${last.x + 30} ${last.y + 28}, ${last.x + 55} ${last.y + 53}, ${last.x + 72} ${last.y + 78}`}
+            d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
             fill="none" stroke="#C3A6F0" strokeOpacity=".35" strokeWidth="1" strokeDasharray="3 7"
           />
-          <circle cx={last.x + 76} cy={last.y + 86} r="3" fill="#C3A6F0" className="pulse" />
-          <text x={last.x + 76} y={last.y + 114} textAnchor="middle" className="star-lab" opacity=".6">
+          <circle cx={last.x+76} cy={last.y+86} r="3" fill="#C3A6F0" className="pulse" />
+          <text x={last.x+76} y={last.y+114} textAnchor="middle" className="star-lab" opacity=".6">
             and everything after
           </text>
 
@@ -109,26 +106,28 @@ export default function Constellation() {
             const isSel = m.id === selected;
             const above = m.y < 200;
             return (
-              <g
-                key={m.id}
-                className="star-hit"
-                tabIndex={0}
-                role="button"
-                aria-pressed={isSel}
-                aria-label={`${m.label}, ${fmtDate(m.date)}`}
+              <g key={m.id} className="star-hit" tabIndex={0} role="button"
+                aria-pressed={isSel} aria-label={`${m.label}, ${fmtDate(m.date)}`}
                 onClick={() => select(m.id)}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), select(m.id))}
-              >
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), select(m.id))}>
+                <circle cx={m.x} cy={m.y} r="36" fill="transparent" />
                 {isSel && (
                   <circle cx={m.x} cy={m.y} r="28"
-                    fill="none" stroke="#F08FA8" strokeOpacity=".5" strokeWidth="1"
-                    style={{ animation: "starPulseRing 1.6s ease-out infinite" }}
-                  />
+                    fill="none" stroke="#F08FA8" strokeOpacity=".6" strokeWidth="1.5"
+                    style={{ animation: "starPulseRing 1.4s ease-out infinite" }} />
+                )}
+                {isSel && (
+                  <circle cx={m.x} cy={m.y} r="38"
+                    fill="none" stroke="#F4C77B" strokeOpacity=".2" strokeWidth="1"
+                    style={{ animation: "starPulseRing 1.4s ease-out 0.4s infinite" }} />
                 )}
                 <circle className="star-halo" cx={m.x} cy={m.y}
-                  r={isSel ? 20 : 12} fill={isSel ? "#F08FA8" : "#F4C77B"} opacity={isSel ? 0.28 : 0.1} />
+                  r={isSel ? 22 : 12}
+                  fill={isSel ? "#F08FA8" : "#F4C77B"}
+                  opacity={isSel ? 0.3 : 0.1} />
                 <circle className="star-core" cx={m.x} cy={m.y}
-                  r={isSel ? 9 : 5} fill={isSel ? "#FFE9EF" : "#F4C77B"}
+                  r={isSel ? 10 : 5}
+                  fill={isSel ? "#FFE9EF" : "#F4C77B"}
                   filter={isSel ? "url(#glow2)" : "url(#glow)"} />
                 <Sparkles x={m.x} y={m.y} active={sparked === m.id} />
                 <text x={m.x} y={above ? m.y - 38 : m.y + 46} textAnchor="middle"
@@ -141,14 +140,17 @@ export default function Constellation() {
         </svg>
       </div>
 
-      <div className="memo mt-4 px-6 md:px-10 py-8" key={selected} style={{ animation: "memoFadeIn 0.5s ease" }}>
-        <p className="eyebrow mb-3">
+      <div className="memo px-5 md:px-8 py-6" key={selected}
+        style={{ marginTop: 12, animation: "memoFadeIn 0.5s ease", borderRadius: 4 }}>
+        <p className="eyebrow mb-2">
           {active.where}
-          {gap !== null && <span className="soft"> &nbsp;&middot;&nbsp; {gap} days later</span>}
+          {gap !== null && <span className="soft"> &nbsp;·&nbsp; {gap} days later</span>}
         </p>
-        <h3 className="display text-3xl md:text-4xl mb-1">{active.label}</h3>
-        <p className="script rose text-2xl mb-6">{fmtDate(active.date)}</p>
-        <p className="soft leading-relaxed max-w-2xl text-sm md:text-base">{active.text}</p>
+        <h3 className="display mb-1" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
+          {active.label}
+        </h3>
+        <p className="script rose mb-4" style={{ fontSize: "1.5rem" }}>{fmtDate(active.date)}</p>
+        <p className="soft leading-relaxed max-w-2xl text-sm">{active.text}</p>
       </div>
     </section>
   );
