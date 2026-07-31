@@ -42,13 +42,20 @@ export default function Reasons({ burst }) {
       </Reveal>
 
       <Reveal delay={160}>
-        {/* 3D flip card */}
-        <div style={{ perspective: 900, marginTop: 28 }}
-          onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-          <div key={animKey} style={{
-            transformStyle: "preserve-3d",
-            animation: flipped ? "cardFlipOut 0.28s ease-in forwards" : "cardFlipIn 0.35s ease-out",
-          }}>
+        <div
+          style={{ perspective: 900, marginTop: 28 }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            key={animKey}
+            style={{
+              transformStyle: "preserve-3d",
+              animation: flipped
+                ? "cardFlipOut 0.28s ease-in forwards"
+                : "cardFlipIn 0.35s ease-out",
+            }}
+          >
             <div className="card3d" style={{ padding: "3rem 2.5rem" }}>
               <p className="gold text-xs tracking-widest mb-5">
                 NO.&nbsp;{String(index + 1).padStart(2, "0")}
@@ -61,20 +68,47 @@ export default function Reasons({ burst }) {
           </div>
         </div>
 
-        {/* Arrows */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 24 }}>
-          <button className="btn" style={{ padding: "11px 18px", fontSize: "1rem" }}
-            onClick={(e) => go(-1, e)} aria-label="Previous">←</button>
-          <button className="btn" onClick={(e) => go(1, e)}>Draw another</button>
-          <button className="btn" style={{ padding: "11px 18px", fontSize: "1rem" }}
-            onClick={(e) => go(1, e)} aria-label="Next">→</button>
+          <button
+            className="btn"
+            style={{ padding: "11px 18px", fontSize: "1rem" }}
+            onClick={(e) => go(-1, e)}
+            aria-label="Previous"
+          >
+            ←
+          </button>
+          <button className="btn" onClick={(e) => go(1, e)}>
+            Draw another
+          </button>
+          <button
+            className="btn"
+            style={{ padding: "11px 18px", fontSize: "1rem" }}
+            onClick={(e) => go(1, e)}
+            aria-label="Next"
+          >
+            →
+          </button>
         </div>
 
-        {/* Progress dots */}
-        <div style={{
-          display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap",
-          maxWidth: 280, margin: "16px auto 0",
-        }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, flexWrap: "wrap", maxWidth: 280, margin: "16px auto 0" }}>
           {REASONS.map((_, i) => (
-            <div key={i} onClick={() => { setIndex(i); setAnimKey((k) => k + 1); }}
+            <div
+              key={i}
+              onClick={() => { setIndex(i); setAnimKey((k) => k + 1); }}
               style={{
+                width: i === index ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                background: i === index ? "var(--rose)" : "rgba(255,255,255,0.18)",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+              }}
+            />
+          ))}
+        </div>
+
+        <p className="soft text-xs mt-4 opacity-60 tracking-widest">{drawn} drawn so far</p>
+      </Reveal>
+    </section>
+  );
+}
