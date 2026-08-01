@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import Reveal from "../components/Reveal.jsx";
 import { PHOTOS } from "../data.js";
 
@@ -13,56 +13,54 @@ const FLOATERS = Array.from({ length: 16 }, (_, i) => ({
   drift : (Math.random() - 0.5) * 60,
 }));
 
-const EASE = "cubic-bezier(0.2,0.8,0.3,1)";
+const EASE_OUT  = "cubic-bezier(0.0, 0.0, 0.2, 1)";
+const EASE_BACK = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+const EASE_IN   = "cubic-bezier(0.4, 0.0, 1.0, 0.6)";
 
-/* ── shared card photo+caption inner ────────── */
+/* ── card photo + caption ─────────────────────────────── */
 function CardInner({ photo, dim }) {
   const [loaded, setLoaded] = useState(false);
   return (
     <>
       <div style={{
-        width:"100%", aspectRatio:"1 / 1.05",
+        width:"100%", aspectRatio:"1/1.05",
         background: photo.src ? "#2a1040" : "linear-gradient(145deg,#2a1040,#3a1858)",
         overflow:"hidden", position:"relative",
         display:"flex", alignItems:"center", justifyContent:"center",
-        opacity: dim ? 0.65 : 1, transition:"opacity 0.4s",
+        opacity: dim ? 0.55 : 1,
+        transition: "opacity 0.5s ease",
       }}>
         {photo.src ? (
           <>
             <img src={photo.src} alt={photo.caption} loading="lazy"
               onLoad={() => setLoaded(true)}
               style={{ width:"100%", height:"100%", objectFit:"cover",
-                opacity:loaded ? 1 : 0, transition:"opacity 0.5s" }} />
-            {!loaded && (
-              <span style={{ position:"absolute", fontSize:"1.5rem", color:"rgba(240,143,168,0.3)" }}>♥</span>
-            )}
+                opacity: loaded ? 1 : 0, transition:"opacity 0.5s" }} />
+            {!loaded && <span style={{ position:"absolute", fontSize:"1.5rem", color:"rgba(240,143,168,0.3)" }}>♥</span>}
           </>
         ) : (
           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
             <span style={{
-              fontSize   : "2rem",
-              color      : dim ? "rgba(240,143,168,0.2)" : "rgba(240,143,168,0.5)",
-              animation  : dim ? "none" : "heartBeatSoft 2s ease-in-out infinite",
-              filter     : dim ? "none" : "drop-shadow(0 0 8px rgba(240,143,168,0.4))",
-              transition : "all 0.38s",
+              fontSize:"2rem",
+              color: dim ? "rgba(240,143,168,0.18)" : "rgba(240,143,168,0.55)",
+              animation: dim ? "none" : "heartBeatSoft 2s ease-in-out infinite",
+              filter: dim ? "none" : "drop-shadow(0 0 10px rgba(240,143,168,0.5))",
+              transition:"all 0.5s ease",
             }}>♥</span>
             {!dim && (
               <span style={{
-                fontSize:"0.45rem", letterSpacing:"0.2em", textTransform:"uppercase",
-                color:"rgba(240,143,168,0.3)", fontFamily:"Jost, sans-serif",
+                fontSize:"0.42rem", letterSpacing:"0.22em", textTransform:"uppercase",
+                color:"rgba(240,143,168,0.28)", fontFamily:"Jost,sans-serif",
               }}>photo here</span>
             )}
           </div>
         )}
       </div>
       <figcaption style={{
-        fontFamily : "Parisienne, cursive",
-        fontSize   : "1.1rem",
-        color      : dim ? "rgba(74,48,96,0.45)" : "#4a3060",
-        textAlign  : "center",
-        marginTop  : 10,
-        lineHeight : 1.3,
-        transition : "all 0.4s",
+        fontFamily:"Parisienne,cursive", fontSize:"1.05rem",
+        color: dim ? "rgba(74,48,96,0.4)" : "#4a3060",
+        textAlign:"center", marginTop:10, lineHeight:1.3,
+        transition:"all 0.5s ease",
       }}>
         {photo.caption}
       </figcaption>
@@ -70,109 +68,164 @@ function CardInner({ photo, dim }) {
   );
 }
 
-/* ── Mobile: stacked card deck ───────────────── */
+/* ═══════════════════════════════════════════════════════
+   MOBILE STACKED DECK
+   3-phase animation:
+   phase "idle"     → cards at rest positions
+   phase "out"      → front flies out (350ms)
+   phase "in"       → new front springs in (400ms)
+
+   Back cards smoothly interpolate through all phases.
+═══════════════════════════════════════════════════════ */
 function StackedDeck({ photos }) {
-  const [current, setCurrent]     = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const [flingDir, setFlingDir]   = useState(1);
-  const [hearts, setHearts]       = useState([]);
+  const [current, setCurrent]   = useState(0);
+  const [phase, setPhase]       = useState("idle");   // idle | out | in
+  const [dir, setDir]           = useState(1);
+  const [hearts, setHearts]     = useState([]);
   const heartId    = useRef(0);
-  const touchStartX = useRef(null);
+  const touchStart = useRef(null);
   const total = photos.length;
 
-  const idx1 = (current + 1) % total;
-  const idx2 = (current + 2) % total;
+  const go = useCallback((direction) => {
+    if (phase !== "idle") return;
+    setDir(direction);
 
-  const go = (dir) => {
-    if (animating) return;
-    setFlingDir(dir);
-    setAnimating(true);
-
+    // spawn hearts
     const id = heartId.current++;
     setHearts(h => [...h, id]);
     setTimeout(() => setHearts(h => h.filter(x => x !== id)), 900);
 
+    // Phase 1: fling front card out
+    setPhase("out");
+
+    // After front is gone, update index (no transition flash — back cards
+    // have already been animating toward their new positions)
     setTimeout(() => {
-      setCurrent(c => (c + dir + total) % total);
-      setAnimating(false);
-    }, 400);
+      setCurrent(c => (c + direction + total) % total);
+      // Phase 2: new card starts from offset, springs in
+      setPhase("in");
+      // Phase 3: back to idle
+      setTimeout(() => setPhase("idle"), 420);
+    }, 320);
+  }, [phase, total]);
+
+  const onTouchStart = e => { touchStart.current = e.touches[0].clientX; };
+  const onTouchEnd   = e => {
+    if (touchStart.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.current;
+    touchStart.current = null;
+    if (Math.abs(dx) > 44) go(dx < 0 ? 1 : -1);
   };
 
-  const onTouchStart = e => { touchStartX.current = e.touches[0].clientX; };
-  const onTouchEnd   = e => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
-    touchStartX.current = null;
-  };
+  const next1 = (current + 1) % total;
+  const next2 = (current + 2) % total;
+
+  // ── per-phase styles for each layer ──────────────────
+
+  /* FRONT CARD */
+  const frontTransform = {
+    idle : "rotate(" + (photos[current].tilt * 0.5) + "deg) scale(1) translateY(0px)",
+    out  : "translateX(" + (dir * 115) + "%) rotate(" + (dir * 16) + "deg) scale(0.85) translateY(24px)",
+    in   : "rotate(" + (photos[current].tilt * 0.5) + "deg) scale(1) translateY(0px)",
+  }[phase];
+
+  const frontTransition = {
+    idle : "transform 0.42s " + EASE_BACK,
+    out  : "transform 0.32s " + EASE_IN,
+    in   : "transform 0.42s " + EASE_BACK,
+  }[phase];
+
+  /* When phase=in, card starts from the opposite side — we use a key trick:
+     setCurrent changes current, React remounts the inner content,
+     but we want the card DIV itself to come from the left/right edge.
+     We do this by setting an initial translateX via the "in" phase. */
+  const frontInitialOffset = phase === "in"
+    ? "translateX(" + (-dir * 60) + "px) rotate(" + (photos[current].tilt * 0.5) + "deg) scale(0.92) translateY(10px)"
+    : null;
+
+  /* MIDDLE CARD (card 2) */
+  const midTransform = {
+    idle : "rotate(4deg) scale(0.93) translateY(-7px)",
+    out  : "rotate(" + (photos[next1].tilt * 0.4) + "deg) scale(0.99) translateY(-1px)",
+    in   : "rotate(" + (photos[next1].tilt * 0.4) + "deg) scale(0.99) translateY(-1px)",
+  }[phase];
+
+  /* BACK CARD (card 3) */
+  const backTransform = {
+    idle : "rotate(-6deg) scale(0.86) translateY(-14px)",
+    out  : "rotate(2deg) scale(0.93) translateY(-7px)",
+    in   : "rotate(2deg) scale(0.93) translateY(-7px)",
+  }[phase];
+
+  const backMidTransition = "transform 0.36s " + EASE_OUT;
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:28 }}>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:24 }}>
 
-      {/* card stack */}
+      {/* stack container */}
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
-          position : "relative",
-          width    : "min(280px, 80vw)",
-          height   : "min(390px, 112vw)",
-          margin   : "0 auto",
+          position:"relative",
+          width:"min(290px, 82vw)",
+          height:"min(400px, 115vw)",
+          margin:"0 auto",
         }}
       >
-        {/* ── back card (card 3) ── */}
+
+        {/* ── CARD 3 (back) ── */}
         <div style={{
-          position     : "absolute", inset:0,
-          background   : "#f5f0e8", borderRadius:3,
-          padding      : "10px 10px 44px",
-          transform    : animating
-            ? "rotate(-2deg) scale(0.95) translateY(-3px)"
-            : "rotate(-7deg) scale(0.87) translateY(-12px)",
-          transition   : "transform 0.4s " + EASE,
-          boxShadow    : "0 3px 16px rgba(0,0,0,0.22)",
-          overflow     : "hidden",
-          pointerEvents: "none",
+          position:"absolute", inset:0,
+          background:"#f5f0e8", borderRadius:3,
+          padding:"10px 10px 44px",
+          transform: backTransform,
+          transition: backMidTransition,
+          boxShadow:"0 2px 12px rgba(0,0,0,0.18)",
+          overflow:"hidden",
+          pointerEvents:"none",
+          willChange:"transform",
         }}>
-          <CardInner photo={photos[idx2]} dim={true} />
+          <CardInner photo={photos[next2]} dim />
         </div>
 
-        {/* ── middle card (card 2) ── */}
+        {/* ── CARD 2 (middle) ── */}
         <div style={{
-          position     : "absolute", inset:0,
-          background   : "#f5f0e8", borderRadius:3,
-          padding      : "10px 10px 44px",
-          transform    : animating
-            ? "rotate(" + (photos[idx1].tilt * 0.4) + "deg) scale(1.0) translateY(0px)"
-            : "rotate(5deg) scale(0.93) translateY(-6px)",
-          transition   : "transform 0.4s " + EASE,
-          boxShadow    : "0 6px 28px rgba(0,0,0,0.28)",
-          overflow     : "hidden",
-          zIndex       : 1,
-          pointerEvents: "none",
+          position:"absolute", inset:0,
+          background:"#f5f0e8", borderRadius:3,
+          padding:"10px 10px 44px",
+          transform: midTransform,
+          transition: backMidTransition,
+          boxShadow:"0 5px 24px rgba(0,0,0,0.24)",
+          overflow:"hidden",
+          zIndex:1,
+          pointerEvents:"none",
+          willChange:"transform",
         }}>
-          <CardInner photo={photos[idx1]} dim={!animating} />
+          <CardInner photo={photos[next1]} dim={phase === "idle"} />
         </div>
 
-        {/* ── front card (card 1) — clickable ── */}
+        {/* ── CARD 1 (front) ── */}
         <div
           onClick={() => go(1)}
           style={{
-            position     : "absolute", inset:0,
-            background   : "#f5f0e8", borderRadius:3,
-            padding      : "10px 10px 44px",
-            transform    : animating
-              ? "translateX(" + (flingDir * 135) + "%) rotate(" + (flingDir * 22) + "deg) scale(0.8)"
-              : "rotate(" + (photos[current].tilt * 0.5) + "deg) scale(1)",
-            transition   : animating
-              ? "transform 0.38s cubic-bezier(0.5,0,1,0.8)"
-              : "transform 0.42s " + EASE,
-            boxShadow    : "0 18px 64px -8px rgba(240,143,168,0.45), 0 0 0 1px rgba(244,199,123,0.22)",
-            cursor       : "pointer",
-            zIndex       : 2,
-            overflow     : "hidden",
+            position:"absolute", inset:0,
+            background:"#f5f0e8", borderRadius:3,
+            padding:"10px 10px 44px",
+            transform: phase === "in" && frontInitialOffset
+              ? frontInitialOffset
+              : frontTransform,
+            transition: frontTransition,
+            boxShadow: phase === "out"
+              ? "0 4px 16px rgba(0,0,0,0.2)"
+              : "0 16px 56px -8px rgba(240,143,168,0.42), 0 0 0 1px rgba(244,199,123,0.2)",
+            cursor: phase === "idle" ? "pointer" : "default",
+            zIndex:2,
+            overflow:"hidden",
+            willChange:"transform",
           }}
         >
-          {/* rainbow top stripe */}
+          {/* gradient top stripe */}
           <div style={{
             position:"absolute", top:0, left:0, right:0, height:3,
             background:"linear-gradient(90deg,#F08FA8,#F4C77B,#C3A6F0)",
@@ -185,17 +238,17 @@ function StackedDeck({ photos }) {
           <div style={{
             position:"absolute", bottom:14, right:14,
             fontSize:"0.5rem", letterSpacing:"0.25em",
-            color:"rgba(244,199,123,0.65)", fontFamily:"Jost, sans-serif",
+            color:"rgba(244,199,123,0.65)", fontFamily:"Jost,sans-serif",
           }}>
             {String(current + 1).padStart(2,"0")} / {String(total).padStart(2,"0")}
           </div>
 
-          {/* first-card hint */}
-          {current === 0 && !animating && (
+          {/* first card hint */}
+          {current === 0 && phase === "idle" && (
             <div style={{
               position:"absolute", bottom:14, left:0, right:0,
               textAlign:"center", fontSize:"0.5rem", letterSpacing:"0.18em",
-              color:"rgba(240,143,168,0.6)", fontFamily:"Jost, sans-serif",
+              color:"rgba(240,143,168,0.6)", fontFamily:"Jost,sans-serif",
               animation:"hintFade 2s ease-in-out infinite",
             }}>
               tap to reveal next ♥
@@ -207,12 +260,11 @@ function StackedDeck({ photos }) {
             <div key={id} style={{
               position:"absolute", top:"38%",
               left:(20 + Math.random() * 60) + "%",
-              fontSize:"1.1rem",
+              fontSize:"1rem",
               color:["#F08FA8","#F4C77B","#C3A6F0"][id % 3],
               pointerEvents:"none",
               animation:"polaHeart 0.9s ease-out forwards",
               zIndex:10,
-              filter:"drop-shadow(0 0 6px currentColor)",
             }}>
               {["♥","✦","♡"][id % 3]}
             </div>
@@ -221,17 +273,20 @@ function StackedDeck({ photos }) {
       </div>
 
       {/* dot nav */}
-      <div style={{ display:"flex", gap:7, justifyContent:"center", flexWrap:"wrap", maxWidth:220 }}>
+      <div style={{
+        display:"flex", gap:7, justifyContent:"center",
+        flexWrap:"wrap", maxWidth:240,
+      }}>
         {photos.map((_, i) => (
           <div key={i}
-            onClick={() => { if (!animating) { setFlingDir(i > current ? 1 : -1); setCurrent(i); }}}
+            onClick={() => { if (phase === "idle") go(i > current ? 1 : -1); }}
             style={{
               width      : i === current ? 22 : 7,
               height     : 7, borderRadius:4,
               background : i === current
                 ? "linear-gradient(90deg,#F08FA8,#C3A6F0)"
                 : i < current ? "rgba(240,143,168,0.4)" : "rgba(255,255,255,0.15)",
-              transition : "all 0.35s " + EASE,
+              transition : "all 0.4s " + EASE_BACK,
               cursor     : "pointer",
             }}
           />
@@ -240,23 +295,23 @@ function StackedDeck({ photos }) {
 
       <p style={{
         fontSize:"0.58rem", letterSpacing:"0.22em",
-        color:"rgba(240,143,168,0.65)", fontFamily:"Jost, sans-serif",
+        color:"rgba(240,143,168,0.65)", fontFamily:"Jost,sans-serif",
         textAlign:"center", animation:"hintFade 2.5s ease-in-out infinite",
       }}>
-        tap card or swipe to flip ✦
+        tap card or swipe left / right ✦
       </p>
     </div>
   );
 }
 
-/* ── Desktop: draggable polaroid ─────────────── */
+/* ── Desktop draggable polaroid ───────────────────────── */
 function DraggablePola({ photo, index, onLift, zIndex }) {
-  const [pos, setPos]           = useState({ x:0, y:0 });
-  const [dragging, setDragging] = useState(false);
-  const [lifted, setLifted]     = useState(false);
-  const [hovered, setHovered]   = useState(false);
+  const [pos, setPos]             = useState({ x:0, y:0 });
+  const [dragging, setDragging]   = useState(false);
+  const [lifted, setLifted]       = useState(false);
+  const [hovered, setHovered]     = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [hearts, setHearts]     = useState([]);
+  const [hearts, setHearts]       = useState([]);
   const startRef   = useRef(null);
   const heartIdRef = useRef(0);
 
@@ -297,12 +352,13 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
         onMouseEnter={onHoverEnter}
         onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
         style={{
-          position  : "relative",
-          transform : "translate(" + pos.x + "px," + pos.y + "px) rotate(" + tilt + "deg) scale(" + scale + ")",
-          transition: dragging ? "box-shadow 0.15s" : "transform 0.4s " + EASE + ", box-shadow 0.4s ease",
+          position:"relative",
+          transform:"translate(" + pos.x + "px," + pos.y + "px) rotate(" + tilt + "deg) scale(" + scale + ")",
+          transition: dragging ? "box-shadow 0.15s" : "transform 0.4s " + EASE_BACK + ", box-shadow 0.4s ease",
           boxShadow, zIndex, cursor: dragging ? "grabbing" : "grab",
           userSelect:"none", background:"#f5f0e8", borderRadius:3,
           padding:"10px 10px 44px", width:"100%", margin:0,
+          willChange:"transform",
         }}
       >
         {hovered && (
@@ -310,12 +366,10 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
             position:"absolute", top:0, left:0, right:0, height:3,
             background:"linear-gradient(90deg,#F08FA8,#F4C77B,#C3A6F0)",
             borderRadius:"3px 3px 0 0", pointerEvents:"none",
-            animation:"fadeIn 0.2s ease",
           }} />
         )}
-
         <div style={{
-          width:"100%", aspectRatio:"1 / 1.05",
+          width:"100%", aspectRatio:"1/1.05",
           background: photo.src ? "#2a1040" : "linear-gradient(145deg,#2a1040,#3a1858)",
           overflow:"hidden", position:"relative",
           display:"flex", alignItems:"center", justifyContent:"center",
@@ -341,21 +395,20 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
               <span style={{
                 fontSize:"0.45rem", letterSpacing:"0.2em", textTransform:"uppercase",
                 color: hovered ? "rgba(240,143,168,0.5)" : "rgba(240,143,168,0.2)",
-                fontFamily:"Jost, sans-serif", transition:"color 0.3s",
+                fontFamily:"Jost,sans-serif", transition:"color 0.3s",
               }}>photo here</span>
             </div>
           )}
           {hovered && (
             <div style={{
               position:"absolute", inset:0,
-              background:"linear-gradient(135deg,rgba(255,255,255,0.08),transparent 55%)",
+              background:"linear-gradient(135deg,rgba(255,255,255,0.07),transparent 55%)",
               pointerEvents:"none",
             }} />
           )}
         </div>
-
         <figcaption style={{
-          fontFamily:"Parisienne, cursive", fontSize:"clamp(0.85rem,2vw,1rem)",
+          fontFamily:"Parisienne,cursive", fontSize:"clamp(0.85rem,2vw,1rem)",
           color: hovered ? "#7a4090" : "#4a3060",
           textAlign:"center", marginTop:10, lineHeight:1.3,
           transition:"color 0.3s ease",
@@ -363,24 +416,20 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
         }}>
           {photo.caption}
         </figcaption>
-
         {hovered && (
           <div style={{
             position:"absolute", top:6, left:8,
             fontSize:"0.45rem", letterSpacing:"0.2em",
-            color:"rgba(244,199,123,0.7)", fontFamily:"Jost, sans-serif",
-            animation:"fadeIn 0.25s ease",
+            color:"rgba(244,199,123,0.7)", fontFamily:"Jost,sans-serif",
           }}>{"0" + (index + 1)}</div>
         )}
-
         {hearts.map(id => (
           <div key={id} aria-hidden="true" style={{
             position:"absolute", top:"35%",
             left:(30 + Math.random() * 40) + "%",
-            fontSize:"0.85rem",
-            color:["#F08FA8","#F4C77B","#C3A6F0"][id % 3],
+            fontSize:"0.85rem", color:["#F08FA8","#F4C77B","#C3A6F0"][id % 3],
             pointerEvents:"none", animation:"polaHeart 1s ease-out forwards",
-            zIndex:5, filter:"drop-shadow(0 0 4px currentColor)",
+            zIndex:5,
           }}>{["♥","✦","♡"][id % 3]}</div>
         ))}
       </figure>
@@ -430,7 +479,6 @@ export default function Moments() {
           85%  { opacity:0.3; }
           100% { opacity:0; transform:translateY(-50px) translateX(var(--drift)); }
         }
-        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
         @keyframes hintFade {
           0%,100% { opacity:0.4; }
           50%     { opacity:0.9; }
@@ -458,7 +506,7 @@ export default function Moments() {
         <p style={{
           fontSize:"0.62rem", letterSpacing:"0.22em",
           color:"rgba(240,143,168,0.65)", marginTop:8,
-          fontFamily:"Jost, sans-serif",
+          fontFamily:"Jost,sans-serif",
           animation:"hintFade 2.5s ease-in-out infinite",
         }}>
           {isMobile ? "✦ tap to flip through them ✦" : "✦ pick them up · move them around ✦"}
@@ -486,7 +534,7 @@ export default function Moments() {
         <p style={{
           textAlign:"center", marginTop:32,
           fontSize:"0.6rem", letterSpacing:"0.25em", textTransform:"uppercase",
-          color:"rgba(195,166,240,0.5)", fontFamily:"Jost, sans-serif",
+          color:"rgba(195,166,240,0.5)", fontFamily:"Jost,sans-serif",
           position:"relative", zIndex:1,
         }}>
           {PHOTOS.length} frames · every one of them counts
