@@ -60,8 +60,6 @@ function PulseRings() {
    Hold 2 s → sparkle blast → fade to home
    Works on any screen size, no distortion
 ───────────────────────────────────────────── */
-import React, { useEffect, useRef } from "react";
-
 function LoveTransition({ active, onDone }) {
   const canvasRef = useRef(null);
   const stateRef  = useRef({ animId: null, doneTimer: null });
