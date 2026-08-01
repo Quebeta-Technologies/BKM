@@ -186,18 +186,18 @@ export const CHAT = [
 /* Leave src as null for a placeholder. tilt is the rotation in degrees.    */
 
 export const PHOTOS = [
-  { src: "/photos/first day.jpeg", caption: "The first one",      tilt: -4 },
-  { src: "/photos/mid laugh.jpeg", caption: "you, mid-laugh",     tilt:  3 },
-  { src: "/photos/first date.jpeg", caption: "24.12.25",           tilt: -2 },
-  { src: "/photos/class.jpeg", caption: "us, no reason",      tilt:  5 },
-  { src: "/photos/class 2.jpeg", caption: "your favourite",     tilt: -5 },
-  { src: "/photos/b.jpeg", caption: "2.13 am",            tilt:  2 },
-  { src: "/photos/v.jpeg", caption: "the look",           tilt: -3 },
-  { src: null, caption: "01.01.26",           tilt:  4 },
-  { src: null, caption: "you didn't know i took this", tilt: -6 },
-  { src: null, caption: "sunday morning",     tilt:  1 },
-  { src: null, caption: "my favourite",       tilt: -4 },
-  { src: null, caption: "just because",       tilt:  3 },
+  { src: "/photos/first day.jpeg", tilt: -4 },
+  { src: "/photos/mid laugh.jpeg", tilt:  3 },
+  { src: "/photos/first date.jpeg", tilt: -2 },
+  { src: "/photos/class.jpeg", tilt:  5 },
+  { src: "/photos/class 2.jpeg", tilt: -5 },
+  { src: "/photos/b.jpeg", tilt:  2 },
+  { src: "/photos/v.jpeg", tilt: -3 },
+  { src: "/photos/gt.jpeg", tilt:  4 },
+  { src: "/photos/fgsfhbsf.jpeg", tilt: -6 },
+  { src: "/photos/cvxgsf.jpeg", tilt:  1 },
+  { src: "/photos/fbfgngd.jpeg", tilt: -4 },
+  { src: "/photos/bvbv.jpeg", tilt:  3 },
 ];
 
 /* ── 10. THE LAST PAGE ───────────────────────────────────────────────────── */
