@@ -2,13 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { START, START_LABEL } from "../data.js";
 
 const HER_NAME = "Rimi";
-const PARTICLE_COUNT = 260;
+const PARTICLE_COUNT = 380;
 
 function easeOut(x)   { return 1 - Math.pow(1 - x, 3); }
 function easeIn(x)    { return x * x * x; }
 function easeInOut(x) { return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; }
 
-/* Sample letter pixels — always use a fixed logical size, ignore DPR */
 function sampleLetters(name) {
   const OW = 500, OH = 140;
   const off = document.createElement("canvas");
@@ -16,15 +15,15 @@ function sampleLetters(name) {
   off.height = OH;
   const c = off.getContext("2d");
   c.clearRect(0, 0, OW, OH);
-  c.fillStyle     = "#fff";
-  c.font          = `300 90px Georgia, serif`; // use system font — always available
-  c.textAlign     = "center";
-  c.textBaseline  = "middle";
+  c.fillStyle    = "#fff";
+  c.font         = `300 90px Georgia, serif`;
+  c.textAlign    = "center";
+  c.textBaseline = "middle";
   c.fillText(name, OW / 2, OH / 2);
   const data = c.getImageData(0, 0, OW, OH).data;
   const pts  = [];
-  for (let y = 0; y < OH; y += 3)
-    for (let x = 0; x < OW; x += 3)
+  for (let y = 0; y < OH; y += 2)
+    for (let x = 0; x < OW; x += 2)
       if (data[(y * OW + x) * 4 + 3] > 80)
         pts.push({ x, y, ow: OW, oh: OH });
   return pts;
@@ -33,6 +32,7 @@ function sampleLetters(name) {
 export default function Hero() {
   const canvasRef = useRef(null);
   const animRef   = useRef(null);
+  const timerRef  = useRef(null);
   const [phase, setPhase]         = useState("galaxy");
   const [contentIn, setContentIn] = useState(false);
   const [now, setNow]             = useState(() => Date.now());
@@ -51,167 +51,155 @@ export default function Hero() {
 
   useEffect(() => {
     if (phase !== "galaxy") return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    /* ── Use logical pixels — ignore devicePixelRatio completely ── */
-    /* This is the key fix. DPR causes particles to be giant on high-DPI screens */
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    canvas.width        = W;
-    canvas.height       = H;
-    canvas.style.width  = W + "px";
-    canvas.style.height = H + "px";
+    /* 100ms delay — lets canvas mount and paint on ALL devices */
+    timerRef.current = setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const cx = W / 2;
-    const cy = H / 2;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      canvas.width        = W;
+      canvas.height       = H;
+      canvas.style.width  = W + "px";
+      canvas.style.height = H + "px";
 
-    /* Sample immediately — no font dependency, uses Georgia */
-    const pts = sampleLetters(HER_NAME);
+      const cx = W / 2;
+      const cy = H / 2;
 
-    const colors = ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE","#fff","#FFD6E0","#E8C5FF"];
-    const maxR   = Math.min(cx, cy) * 0.88;
+      const pts    = sampleLetters(HER_NAME);
+      const colors = ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE","#fff","#FFD6E0","#E8C5FF"];
+      const maxR   = Math.min(cx, cy) * 0.88;
 
-    const particles = Array.from({ length: PARTICLE_COUNT }, () => {
-      const angle  = Math.random() * Math.PI * 2;
-      const radius = maxR * (0.2 + Math.random() * 0.8);
+      const particles = Array.from({ length: PARTICLE_COUNT }, () => {
+        const angle  = Math.random() * Math.PI * 2;
+        const radius = maxR * (0.2 + Math.random() * 0.8);
+        const pt     = pts.length
+          ? pts[Math.floor(Math.random() * pts.length)]
+          : { x: cx, y: cy, ow: 1, oh: 1 };
+        const scale  = Math.min(W / pt.ow, H / pt.oh) * 0.50;
+        const offX   = cx - (pt.ow / 2) * scale;
+        const offY   = cy - (pt.oh / 2) * scale - H * 0.04;
+        const tx     = pt.x * scale + offX;
+        const ty     = pt.y * scale + offY;
+        const ox     = cx + Math.cos(angle) * radius;
+        const oy     = cy + Math.sin(angle) * radius;
 
-      /* scale letter pts to canvas logical size */
-      const pt    = pts.length ? pts[Math.floor(Math.random() * pts.length)] : { x: cx, y: cy, ow: 1, oh: 1 };
-      const scale = Math.min(W / pt.ow, H / pt.oh) * 0.50;
-      const offX  = cx - (pt.ow / 2) * scale;
-      const offY  = cy - (pt.oh / 2) * scale - H * 0.04;
-      const tx    = pt.x * scale + offX;
-      const ty    = pt.y * scale + offY;
-      const ox    = cx + Math.cos(angle) * radius;
-      const oy    = cy + Math.sin(angle) * radius;
-
-      return {
-        ox, oy, tx, ty,
-        color      : colors[Math.floor(Math.random() * colors.length)],
-        size       : 1 + Math.random() * 1.8,   // fixed small logical pixels
-        orbitAngle : angle,
-        orbitRadius: radius,
-        orbitSpeed : (Math.random() - 0.5) * 0.009,
-        twinkle    : Math.random() * Math.PI * 2,
-        twinkleSpd : 0.05 + Math.random() * 0.08,
-        trail      : [],
-        sx         : cx + (Math.random() - 0.5) * W * 1.6,
-        sy         : cy + (Math.random() - 0.5) * H * 1.6,
-      };
-    });
-
-    const SWIRL = 150, FORM = 110, HOLD = 100, SCATTER = 65;
-    const TOTAL = SWIRL + FORM + HOLD + SCATTER;
-    let t = 0;
-
-    const tick = () => {
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, W, H);
-      t++;
-
-      let ph, lt;
-      if      (t <= SWIRL)             { ph="swirl";   lt=t/SWIRL; }
-      else if (t <= SWIRL+FORM)        { ph="form";    lt=(t-SWIRL)/FORM; }
-      else if (t <= SWIRL+FORM+HOLD)   { ph="hold";    lt=(t-SWIRL-FORM)/HOLD; }
-      else if (t <= TOTAL)             { ph="scatter"; lt=(t-SWIRL-FORM-HOLD)/SCATTER; }
-      else {
-        cancelAnimationFrame(animRef.current);
-        setPhase("content");
-        setTimeout(() => setContentIn(true), 80);
-        return;
-      }
-
-      particles.forEach((p) => {
-        p.twinkle    += p.twinkleSpd;
-        p.orbitAngle += p.orbitSpeed;
-        let px, py, alpha, sz;
-
-        if (ph === "swirl") {
-          const pull = easeInOut(lt) * 0.5;
-          px    = cx + Math.cos(p.orbitAngle) * p.orbitRadius * (1 - pull * 0.4);
-          py    = cy + Math.sin(p.orbitAngle) * p.orbitRadius * (1 - pull * 0.4);
-          alpha = 0.25 + Math.sin(p.twinkle) * 0.3 + lt * 0.28;
-          sz    = p.size * (0.7 + Math.sin(p.twinkle) * 0.3);
-          p.trail.push({ x: px, y: py });
-          if (p.trail.length > 7) p.trail.shift();
-
-        } else if (ph === "form") {
-          const e = easeOut(lt);
-          px    = p.ox + (p.tx - p.ox) * e;
-          py    = p.oy + (p.ty - p.oy) * e;
-          alpha = 0.4 + e * 0.6;
-          sz    = p.size * (1 + (1 - e) * 0.8);
-          p.trail = [];
-
-        } else if (ph === "hold") {
-          px    = p.tx + Math.sin(p.twinkle * 0.7) * 0.8;
-          py    = p.ty + Math.cos(p.twinkle * 0.5) * 0.8;
-          alpha = 0.8 + Math.sin(p.twinkle) * 0.2;
-          sz    = p.size * (1 + Math.sin(p.twinkle * 1.1) * 0.2);
-          p.trail = [];
-
-        } else {
-          const e = easeIn(lt);
-          px    = p.tx + (p.sx - p.tx) * e;
-          py    = p.ty + (p.sy - p.ty) * e;
-          alpha = Math.max(0, 1 - e * 1.6);
-          sz    = p.size * (1 + e * 2.2);
-          p.trail = [];
-        }
-
-        /* trails */
-        if (p.trail.length > 1) {
-          for (let i = 1; i < p.trail.length; i++) {
-            const a = (i / p.trail.length) * 0.15 * alpha;
-            ctx.beginPath();
-            ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
-            ctx.lineTo(p.trail[i].x,   p.trail[i].y);
-            ctx.strokeStyle = p.color + Math.floor(a * 255).toString(16).padStart(2,"0");
-            ctx.lineWidth   = sz * 0.5;
-            ctx.stroke();
-          }
-        }
-
-        /* particle dot */
-        ctx.beginPath();
-        ctx.arc(px, py, Math.max(0.3, sz), 0, Math.PI * 2);
-        ctx.fillStyle = p.color + Math.floor(Math.min(1, alpha) * 255).toString(16).padStart(2,"0");
-        ctx.fill();
-
-        /* soft glow */
-        if (alpha > 0.3) {
-          ctx.beginPath();
-          ctx.arc(px, py, sz * 2.8, 0, Math.PI * 2);
-          ctx.fillStyle = p.color + Math.floor(alpha * 0.1 * 255).toString(16).padStart(2,"0");
-          ctx.fill();
-        }
+        return {
+          ox, oy, tx, ty,
+          color      : colors[Math.floor(Math.random() * colors.length)],
+          size       : 1.2 + Math.random() * 2,
+          orbitAngle : angle,
+          orbitRadius: radius,
+          orbitSpeed : (Math.random() - 0.5) * 0.009,
+          twinkle    : Math.random() * Math.PI * 2,
+          twinkleSpd : 0.05 + Math.random() * 0.08,
+          trail      : [],
+          sx         : cx + (Math.random() - 0.5) * W * 1.6,
+          sy         : cy + (Math.random() - 0.5) * H * 1.6,
+        };
       });
 
-      /* name appears during hold */
-      if (ph === "hold") {
-        const a  = Math.min(1, lt * 3);
-        const fs = Math.min(W * 0.22, H * 0.18, 160);
-        ctx.save();
-        ctx.globalAlpha  = a * 0.92;
-        ctx.font         = `400 ${fs}px Parisienne, cursive`;
-        ctx.textAlign    = "center";
-        ctx.textBaseline = "middle";
-        ctx.shadowColor  = "rgba(240,143,168,0.95)";
-        ctx.shadowBlur   = 48;
-        ctx.fillStyle    = "#F08FA8";
-        ctx.fillText(HER_NAME, cx, cy - H * 0.04);
-        ctx.shadowBlur   = 95;
-        ctx.globalAlpha  = a * 0.25;
-        ctx.fillText(HER_NAME, cx, cy - H * 0.04);
-        ctx.restore();
-      }
+      const SWIRL = 150, FORM = 110, HOLD = 110, SCATTER = 65;
+      const TOTAL = SWIRL + FORM + HOLD + SCATTER;
+      let t = 0;
+
+      const tick = () => {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, W, H);
+        t++;
+
+        let ph, lt;
+        if      (t <= SWIRL)           { ph="swirl";   lt=t/SWIRL; }
+        else if (t <= SWIRL+FORM)      { ph="form";    lt=(t-SWIRL)/FORM; }
+        else if (t <= SWIRL+FORM+HOLD) { ph="hold";    lt=(t-SWIRL-FORM)/HOLD; }
+        else if (t <= TOTAL)           { ph="scatter"; lt=(t-SWIRL-FORM-HOLD)/SCATTER; }
+        else {
+          cancelAnimationFrame(animRef.current);
+          setPhase("content");
+          setTimeout(() => setContentIn(true), 80);
+          return;
+        }
+
+        particles.forEach((p) => {
+          p.twinkle    += p.twinkleSpd;
+          p.orbitAngle += p.orbitSpeed;
+          let px, py, alpha, sz;
+
+          if (ph === "swirl") {
+            const pull = easeInOut(lt) * 0.5;
+            px    = cx + Math.cos(p.orbitAngle) * p.orbitRadius * (1 - pull * 0.4);
+            py    = cy + Math.sin(p.orbitAngle) * p.orbitRadius * (1 - pull * 0.4);
+            alpha = 0.25 + Math.sin(p.twinkle) * 0.3 + lt * 0.28;
+            sz    = p.size * (0.7 + Math.sin(p.twinkle) * 0.3);
+            p.trail.push({ x: px, y: py });
+            if (p.trail.length > 7) p.trail.shift();
+
+          } else if (ph === "form") {
+            const e = easeOut(lt);
+            px    = p.ox + (p.tx - p.ox) * e;
+            py    = p.oy + (p.ty - p.oy) * e;
+            alpha = 0.4 + e * 0.6;
+            sz    = p.size * (1 + (1 - e) * 0.8);
+            p.trail = [];
+
+          } else if (ph === "hold") {
+            /* particles gently breathe in place — NO text overlay */
+            px    = p.tx + Math.sin(p.twinkle * 0.7) * 0.8;
+            py    = p.ty + Math.cos(p.twinkle * 0.5) * 0.8;
+            alpha = 0.8 + Math.sin(p.twinkle) * 0.2;
+            sz    = p.size * (1 + Math.sin(p.twinkle * 1.1) * 0.2);
+            p.trail = [];
+
+          } else {
+            const e = easeIn(lt);
+            px    = p.tx + (p.sx - p.tx) * e;
+            py    = p.ty + (p.sy - p.ty) * e;
+            alpha = Math.max(0, 1 - e * 1.6);
+            sz    = p.size * (1 + e * 2.2);
+            p.trail = [];
+          }
+
+          /* trails */
+          if (p.trail.length > 1) {
+            for (let i = 1; i < p.trail.length; i++) {
+              const a = (i / p.trail.length) * 0.15 * alpha;
+              ctx.beginPath();
+              ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
+              ctx.lineTo(p.trail[i].x,   p.trail[i].y);
+              ctx.strokeStyle = p.color + Math.floor(a * 255).toString(16).padStart(2,"00");
+              ctx.lineWidth   = sz * 0.5;
+              ctx.stroke();
+            }
+          }
+
+          /* particle dot */
+          ctx.beginPath();
+          ctx.arc(px, py, Math.max(0.3, sz), 0, Math.PI * 2);
+          ctx.fillStyle = p.color + Math.floor(Math.min(1, alpha) * 255).toString(16).padStart(2,"00");
+          ctx.fill();
+
+          /* soft glow */
+          if (alpha > 0.3) {
+            ctx.beginPath();
+            ctx.arc(px, py, sz * 2.8, 0, Math.PI * 2);
+            ctx.fillStyle = p.color + Math.floor(alpha * 0.1 * 255).toString(16).padStart(2,"00");
+            ctx.fill();
+          }
+        });
+
+        /* NO fillText here — particles only form the name */
+
+        animRef.current = requestAnimationFrame(tick);
+      };
 
       animRef.current = requestAnimationFrame(tick);
-    };
+    }, 100);
 
-    animRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animRef.current);
+    return () => {
+      clearTimeout(timerRef.current);
+      cancelAnimationFrame(animRef.current);
+    };
   }, [phase]);
 
   const ms = now - new Date(START).getTime();
@@ -231,7 +219,6 @@ export default function Hero() {
   return (
     <header className="min-h-screen relative overflow-hidden flex items-center justify-center">
 
-      {/* Galaxy canvas */}
       <canvas ref={canvasRef} style={{
         position:"absolute", inset:0,
         width:"100%", height:"100%",
@@ -240,9 +227,9 @@ export default function Hero() {
         pointerEvents:"none",
       }} />
 
-      {/* Skip button */}
       {phase === "galaxy" && (
         <button onClick={() => {
+          clearTimeout(timerRef.current);
           cancelAnimationFrame(animRef.current);
           setPhase("content");
           setTimeout(() => setContentIn(true), 80);
@@ -259,10 +246,8 @@ export default function Hero() {
         }}>skip ›</button>
       )}
 
-      {/* Main content */}
       {phase === "content" && (
         <div className="text-center px-6 relative z-10 w-full" style={{ maxWidth:720 }}>
-
           {ORBS.map((o, i) => (
             <div key={i} aria-hidden="true" style={{
               position:"fixed", zIndex:0,
