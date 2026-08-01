@@ -182,7 +182,7 @@ function LoveTransition({ active, onDone }) {
 
     const particles = allPts.map((pt, i) => {
       const angle = Math.random() * Math.PI * 2;
-      const dist  = Math.min(W, H) * (0.4 + Math.random() * 0.6);
+      const dist = Math.min(W, H) * (0.3 + Math.random() * 0.3);
       const color = COLORS[i % COLORS.length];
       const shape = i % 4;
       return {
@@ -226,12 +226,11 @@ function LoveTransition({ active, onDone }) {
 
         if (ph === "gather") {
           const e = easeInOut(lt);
-          const swirl = (1 - e) * Math.PI * 0.6;
-          px    = p.sx + (p.tx - p.sx) * e + Math.sin(swirl + i * 0.08) * 40 * (1 - e);
-          py    = p.sy + (p.ty - p.sy) * e + Math.cos(swirl + i * 0.08) * 30 * (1 - e);
-          alpha = 0.15 + e * 0.85;
-          sz    = p.size * (0.4 + e * 0.6);
-
+          /* simple straight lerp to target — no swirl offset */
+          px    = p.sx + (p.tx - p.sx) * e;
+          py    = p.sy + (p.ty - p.sy) * e;
+          alpha = 0.2 + e * 0.8;
+          sz    = p.size * (0.3 + e * 0.7);
         } else if (ph === "hold") {
           const breath = Math.sin(t * 0.09 + i * 0.25) * 1.8;
           px    = p.tx + breath;
