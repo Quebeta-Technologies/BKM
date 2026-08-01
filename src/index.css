@@ -385,15 +385,16 @@ svg {
 /* ── LOVE TRANSITION ── */
 @keyframes loveTransFade {
   0%   { opacity: 0; }
-  6%   { opacity: 1; }
-  70%  { opacity: 1; }
+  5%   { opacity: 1; }
+  75%  { opacity: 1; }
   100% { opacity: 0; }
 }
+
 @keyframes loveTransGlow {
-  0%   { opacity: 0; transform: scale(0.4); }
-  20%  { opacity: 1; transform: scale(1); }
-  80%  { opacity: 1; transform: scale(1.2); }
-  100% { opacity: 0; transform: scale(2); }
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  75%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(2); }
 }
 @keyframes loveTransText {
   0%   { opacity: 0; transform: scale(0.6) translateY(30px); }
