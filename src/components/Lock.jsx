@@ -9,9 +9,7 @@ function LockHeart({ style }) {
       fontSize: style.size, color: style.color,
       left: style.left, top: style.top, opacity: 0,
       animation: `lockHeartFloat ${style.dur}s ease-in-out ${style.delay}s infinite`,
-    }}>
-      {style.glyph}
-    </div>
+    }}>{style.glyph}</div>
   );
 }
 
@@ -54,187 +52,70 @@ function PulseRings() {
   );
 }
 
-/* ── PETALS falling during transition ── */
-function Petals({ active }) {
-  if (!active) return null;
-  const petals = Array.from({ length: 35 }, (_, i) => ({
-    id: i,
-    left: `${5 + Math.random() * 90}%`,
-    size: 10 + Math.random() * 18,
-    dur: 2.5 + Math.random() * 2.5,
-    delay: Math.random() * 1.2,
-    drift: (Math.random() - 0.5) * 120,
-    rot: Math.random() * 720 - 360,
-    glyph: ["🌸","✿","❀","🌺","♥","✦"][Math.floor(Math.random() * 6)],
-    color: ["#F08FA8","#FBD5DE","#F4C77B","#C3A6F0","#fff"][Math.floor(Math.random() * 5)],
-  }));
-  return (
-    <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 195, pointerEvents: "none", overflow: "hidden" }}>
-      {petals.map((p) => (
-        <div key={p.id} style={{
-          position: "absolute",
-          left: p.left, top: "-60px",
-          fontSize: p.size,
-          color: p.color,
-          filter: `drop-shadow(0 0 6px ${p.color})`,
-          animation: `petalFall ${p.dur}s cubic-bezier(.3,0,.7,1) ${p.delay}s forwards`,
-          "--drift": `${p.drift}px`,
-          "--rot": `${p.rot}deg`,
-          opacity: 0,
-        }}>
-          {p.glyph}
-        </div>
-      ))}
-    </div>
-  );
-}
+/* Simple beautiful fade — no petals, no doors, no overlapping layers */
+function UnlockOverlay({ active, onDone }) {
+  useEffect(() => {
+    if (!active) return;
+    const t = setTimeout(onDone, 2000);
+    return () => clearTimeout(t);
+  }, [active, onDone]);
 
-/* ── GLITTER particles ── */
-function Glitter({ active }) {
   if (!active) return null;
-  const dots = Array.from({ length: 80 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    size: 2 + Math.random() * 5,
-    dur: 0.6 + Math.random() * 1.2,
-    delay: Math.random() * 1.0,
-    color: ["#F4C77B","#F08FA8","#C3A6F0","#fff","#FBD5DE"][Math.floor(Math.random() * 5)],
-  }));
-  return (
-    <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 196, pointerEvents: "none" }}>
-      {dots.map((d) => (
-        <div key={d.id} style={{
-          position: "absolute",
-          left: d.left, top: d.top,
-          width: d.size, height: d.size,
-          borderRadius: "50%",
-          background: d.color,
-          boxShadow: `0 0 ${d.size * 2}px ${d.color}`,
-          animation: `glitterPop ${d.dur}s ease-out ${d.delay}s forwards`,
-          opacity: 0,
-        }} />
-      ))}
-    </div>
-  );
-}
 
-/* ── DOOR SPLIT panels ── */
-function DoorSplit({ active }) {
-  if (!active) return null;
-  return (
-    <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 194, pointerEvents: "none" }}>
-      {/* Left panel */}
-      <div style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, width: "50%",
-        background: "linear-gradient(135deg, #0b0918 60%, #1a0d2e)",
-        animation: "doorLeft 1.8s cubic-bezier(.7,0,.3,1) 0.4s forwards",
-        transformOrigin: "left center",
-        boxShadow: "inset -20px 0 60px rgba(240,143,168,0.15)",
-      }}>
-        <div style={{
-          position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
-          width: 1, height: "40%",
-          background: "linear-gradient(180deg, transparent, rgba(240,143,168,0.6), transparent)",
-        }} />
-      </div>
-      {/* Right panel */}
-      <div style={{
-        position: "absolute", right: 0, top: 0, bottom: 0, width: "50%",
-        background: "linear-gradient(225deg, #0b0918 60%, #1a0d2e)",
-        animation: "doorRight 1.8s cubic-bezier(.7,0,.3,1) 0.4s forwards",
-        transformOrigin: "right center",
-        boxShadow: "inset 20px 0 60px rgba(240,143,168,0.15)",
-      }}>
-        <div style={{
-          position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)",
-          width: 1, height: "40%",
-          background: "linear-gradient(180deg, transparent, rgba(240,143,168,0.6), transparent)",
-        }} />
-      </div>
-      {/* Light burst from centre seam */}
-      <div style={{
-        position: "absolute", left: "50%", top: 0, bottom: 0,
-        width: 2, transform: "translateX(-50%)",
-        background: "linear-gradient(180deg, transparent 10%, rgba(240,143,168,0.8) 50%, transparent 90%)",
-        animation: "seamGlow 1.8s ease 0.4s forwards",
-        boxShadow: "0 0 30px rgba(240,143,168,0.6)",
-      }} />
-    </div>
-  );
-}
-
-/* ── GLASS SHATTER pieces ── */
-function GlassShatter({ active }) {
-  if (!active) return null;
-  const shards = Array.from({ length: 16 }, (_, i) => {
-    const angle = (i / 16) * 360;
-    const dist = 80 + Math.random() * 160;
-    return {
-      id: i, angle, dist,
-      w: 40 + Math.random() * 80,
-      h: 30 + Math.random() * 60,
-      left: `${20 + Math.random() * 60}%`,
-      top: `${20 + Math.random() * 60}%`,
-      rot: Math.random() * 360,
-      dur: 0.8 + Math.random() * 0.6,
-      delay: Math.random() * 0.3,
-    };
-  });
-  return (
-    <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: 197, pointerEvents: "none" }}>
-      {shards.map((s) => (
-        <div key={s.id} style={{
-          position: "absolute",
-          left: s.left, top: s.top,
-          width: s.w, height: s.h,
-          background: "linear-gradient(135deg, rgba(240,143,168,0.25), rgba(195,166,240,0.15))",
-          border: "1px solid rgba(240,143,168,0.4)",
-          backdropFilter: "blur(2px)",
-          clipPath: "polygon(20% 0%, 80% 5%, 100% 50%, 75% 100%, 15% 95%, 0% 45%)",
-          animation: `shardFly ${s.dur}s cubic-bezier(.2,.8,.3,1) ${s.delay}s forwards`,
-          "--sx": `${Math.cos((s.angle * Math.PI) / 180) * s.dist}px`,
-          "--sy": `${Math.sin((s.angle * Math.PI) / 180) * s.dist}px`,
-          "--sr": `${s.rot}deg`,
-          opacity: 0,
-        }} />
-      ))}
-    </div>
-  );
-}
-
-/* ── HER NAME fades in centre during transition ── */
-function NameReveal({ active }) {
-  if (!active) return null;
   return (
     <div aria-hidden="true" style={{
-      position: "fixed", inset: 0, zIndex: 198,
-      display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center",
-      pointerEvents: "none",
+      position: "fixed", inset: 0, zIndex: 195,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexDirection: "column", pointerEvents: "none",
+      animation: "unlockOverlayFade 2s ease forwards",
     }}>
+      {/* radial rose glow from centre */}
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "radial-gradient(ellipse 60% 60% at 50% 50%, rgba(240,143,168,0.35), transparent 70%)",
+        animation: "unlockGlowExpand 1.8s ease forwards",
+      }} />
+
+      {/* her name in huge script */}
       <p style={{
         fontFamily: "Parisienne, cursive",
-        fontSize: "clamp(3rem, 10vw, 6rem)",
+        fontSize: "clamp(3.5rem, 12vw, 7rem)",
         color: "#F08FA8",
-        textShadow: "0 0 60px rgba(240,143,168,0.9), 0 0 120px rgba(240,143,168,0.4)",
-        animation: "nameRevealAnim 2.5s ease forwards",
-        margin: 0, lineHeight: 1.2,
+        textShadow: "0 0 60px rgba(240,143,168,1), 0 0 120px rgba(240,143,168,0.6)",
+        animation: "unlockNamePop 2s ease forwards",
+        margin: 0, lineHeight: 1.2, position: "relative", zIndex: 2,
       }}>
         {HER_NAME}
       </p>
+
+      {/* subtitle */}
       <p style={{
         fontFamily: "Jost, sans-serif",
-        fontSize: "0.72rem",
+        fontSize: "0.68rem",
         letterSpacing: "0.45em",
         textTransform: "uppercase",
         color: "var(--gold)",
-        opacity: 0,
-        animation: "nameRevealSub 2.5s ease 0.4s forwards",
-        marginTop: 16,
+        animation: "unlockSubFade 2s ease 0.3s forwards",
+        opacity: 0, marginTop: 16, position: "relative", zIndex: 2,
       }}>
         this is all for you
       </p>
+
+      {/* floating hearts */}
+      {Array.from({ length: 16 }, (_, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          left: `${5 + i * 6}%`,
+          bottom: "-20px",
+          fontSize: 14 + Math.random() * 14,
+          color: ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE"][i % 4],
+          animation: `unlockHeart ${1.5 + Math.random()}s ease-out ${Math.random() * 0.8}s forwards`,
+          "--udrift": `${(Math.random() - 0.5) * 80}px`,
+          opacity: 0,
+        }}>
+          {["♥","♡","✦","❤","✿"][i % 5]}
+        </div>
+      ))}
     </div>
   );
 }
@@ -250,12 +131,12 @@ const BG_HEARTS = Array.from({ length: 18 }, () => ({
 }));
 
 export default function Lock({ onUnlock }) {
-  const [value, setValue] = useState("");
-  const [wrong, setWrong] = useState(0);
-  const [shake, setShake] = useState(false);
-  const [stage, setStage] = useState("idle"); // idle → unlocking → leaving → gone
-  const [phase, setPhase] = useState(0);
-  const [hint, setHint] = useState(false);
+  const [value, setValue]   = useState("");
+  const [wrong, setWrong]   = useState(0);
+  const [shake, setShake]   = useState(false);
+  const [stage, setStage]   = useState("idle"); // idle → unlocking → gone
+  const [phase, setPhase]   = useState(0);
+  const [hint, setHint]     = useState(false);
   const input = useRef(null);
 
   useEffect(() => {
@@ -273,15 +154,8 @@ export default function Lock({ onUnlock }) {
     e.preventDefault();
     if (!value.trim()) return;
     if (normalise(value) === normalise(LOCK.password)) {
-      // Stage 1 — shatter + glitter + petals start
       setStage("unlocking");
-      // Stage 2 — door opens, name reveals, lock fades
-      setTimeout(() => {
-        setStage("leaving");
-        onUnlock();
-      }, 700);
-      // Stage 3 — everything gone, show page
-      setTimeout(() => setStage("gone"), 3000);
+      onUnlock(); // tell App immediately — Hero starts loading
     } else {
       setWrong((w) => w + 1);
       setShake(true);
@@ -292,43 +166,29 @@ export default function Lock({ onUnlock }) {
 
   if (stage === "gone") return null;
 
-  const unlocking = stage === "unlocking" || stage === "leaving";
-  const leaving = stage === "leaving";
-
   const message = wrong === 0
     ? null
     : LOCK.wrongMessages[Math.min(wrong - 1, LOCK.wrongMessages.length - 1)];
 
   return (
     <>
-      {/* Layer 1: Petals fall */}
-      <Petals active={unlocking} />
+      <UnlockOverlay
+        active={stage === "unlocking"}
+        onDone={() => setStage("gone")}
+      />
 
-      {/* Layer 2: Glitter dissolve */}
-      <Glitter active={unlocking} />
-
-      {/* Layer 3: Glass shards */}
-      <GlassShatter active={stage === "unlocking"} />
-
-      {/* Layer 4: Door splits open */}
-      <DoorSplit active={leaving} />
-
-      {/* Layer 5: Her name appears */}
-      <NameReveal active={leaving} />
-
-      {/* The lock screen itself */}
       <div
         className="lock"
         style={{
           background: "var(--night)",
           overflow: "hidden",
-          opacity: leaving ? 0 : 1,
-          filter: leaving ? "blur(18px)" : "none",
-          transform: leaving ? "scale(0.94)" : "none",
-          transition: leaving
-            ? "opacity 1.4s ease 0.5s, filter 1.4s ease 0.5s, transform 1.4s ease 0.5s"
+          opacity: stage === "unlocking" ? 0 : 1,
+          filter: stage === "unlocking" ? "blur(20px)" : "none",
+          transform: stage === "unlocking" ? "scale(0.96)" : "none",
+          transition: stage === "unlocking"
+            ? "opacity 0.8s ease, filter 0.8s ease, transform 0.8s ease"
             : "none",
-          pointerEvents: leaving ? "none" : "auto",
+          pointerEvents: stage === "unlocking" ? "none" : "auto",
         }}
       >
         {BG_HEARTS.map((h, i) => <LockHeart key={i} style={h} />)}
@@ -346,8 +206,7 @@ export default function Lock({ onUnlock }) {
 
         <div style={{
           position: "relative", zIndex: 10,
-          width: "100%", maxWidth: 460,
-          padding: "0 28px",
+          width: "100%", maxWidth: 460, padding: "0 28px",
           display: "flex", flexDirection: "column", alignItems: "center",
           opacity: phase === 1 ? 1 : 0,
           transform: phase === 1 ? "none" : "translateY(30px)",
@@ -363,7 +222,7 @@ export default function Lock({ onUnlock }) {
               transform: "translate(-50%, -50%)",
               fontFamily: "Parisienne, cursive",
               fontSize: "3.2rem", color: "#F08FA8",
-              animation: unlocking
+              animation: stage === "unlocking"
                 ? "lockHeartUnlock 0.6s ease forwards"
                 : "lockHeartBeat 1.8s ease-in-out infinite",
               textShadow: "0 0 30px rgba(240,143,168,0.8), 0 0 60px rgba(240,143,168,0.4)",
@@ -371,9 +230,7 @@ export default function Lock({ onUnlock }) {
             }}>♥</div>
           </div>
 
-          <p className="eyebrow mb-4" style={{
-            animation: "lockFadeUp 0.8s ease 0.8s both", textAlign: "center",
-          }}>
+          <p className="eyebrow mb-4" style={{ animation: "lockFadeUp 0.8s ease 0.8s both", textAlign: "center" }}>
             Something I made just for you
           </p>
 
@@ -439,17 +296,15 @@ export default function Lock({ onUnlock }) {
               />
             </div>
 
-            <button
-              type="submit"
-              style={{
-                marginTop: 16, width: "100%", padding: "16px 0",
-                background: "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))",
-                border: "1px solid rgba(240,143,168,0.45)",
-                borderRadius: 8, color: "var(--cream)",
-                fontFamily: "Jost, sans-serif", fontSize: "0.72rem",
-                letterSpacing: "0.36em", textTransform: "uppercase",
-                cursor: "pointer", transition: "all 0.35s", backdropFilter: "blur(8px)",
-              }}
+            <button type="submit" style={{
+              marginTop: 16, width: "100%", padding: "16px 0",
+              background: "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))",
+              border: "1px solid rgba(240,143,168,0.45)",
+              borderRadius: 8, color: "var(--cream)",
+              fontFamily: "Jost, sans-serif", fontSize: "0.72rem",
+              letterSpacing: "0.36em", textTransform: "uppercase",
+              cursor: "pointer", transition: "all 0.35s", backdropFilter: "blur(8px)",
+            }}
               onMouseEnter={(e) => {
                 e.target.style.background = "linear-gradient(135deg, rgba(240,143,168,0.35), rgba(195,166,240,0.25))";
                 e.target.style.boxShadow = "0 0 30px rgba(240,143,168,0.3)";

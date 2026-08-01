@@ -344,3 +344,36 @@ svg {
 .star-hit:focus-visible {
   outline: none !important;
 }
+
+
+
+/* ── CLEAN UNLOCK TRANSITION ── */
+@keyframes unlockOverlayFade {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes unlockGlowExpand {
+  0%   { opacity: 0; transform: scale(0.5); }
+  30%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2); }
+}
+@keyframes unlockNamePop {
+  0%   { opacity: 0; transform: scale(0.6) translateY(20px); }
+  25%  { opacity: 1; transform: scale(1.05) translateY(0); }
+  50%  { transform: scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1) translateY(-20px); }
+}
+@keyframes unlockSubFade {
+  0%   { opacity: 0; transform: translateY(8px); }
+  30%  { opacity: 1; transform: none; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes unlockHeart {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-80vh) translateX(var(--udrift)); }
+}
