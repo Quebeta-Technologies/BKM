@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { START, START_LABEL } from "../data.js";
 
 const HER_NAME = "Rimi";
-const PARTICLE_COUNT = 380;
+const PARTICLE_COUNT = 500;
 
 function easeOut(x)   { return 1 - Math.pow(1 - x, 3); }
 function easeIn(x)    { return x * x * x; }
@@ -52,7 +52,6 @@ export default function Hero() {
   useEffect(() => {
     if (phase !== "galaxy") return;
 
-    /* 100ms delay — lets canvas mount and paint on ALL devices */
     timerRef.current = setTimeout(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -77,7 +76,7 @@ export default function Hero() {
         const pt     = pts.length
           ? pts[Math.floor(Math.random() * pts.length)]
           : { x: cx, y: cy, ow: 1, oh: 1 };
-        const scale  = Math.min(W / pt.ow, H / pt.oh) * 0.50;
+        const scale  = Math.min(W / pt.ow, H / pt.oh) * 0.65;
         const offX   = cx - (pt.ow / 2) * scale;
         const offY   = cy - (pt.oh / 2) * scale - H * 0.04;
         const tx     = pt.x * scale + offX;
@@ -88,7 +87,7 @@ export default function Hero() {
         return {
           ox, oy, tx, ty,
           color      : colors[Math.floor(Math.random() * colors.length)],
-          size       : 1.2 + Math.random() * 2,
+          size       : 2.5 + Math.random() * 3.5,
           orbitAngle : angle,
           orbitRadius: radius,
           orbitSpeed : (Math.random() - 0.5) * 0.009,
@@ -144,7 +143,6 @@ export default function Hero() {
             p.trail = [];
 
           } else if (ph === "hold") {
-            /* particles gently breathe in place — NO text overlay */
             px    = p.tx + Math.sin(p.twinkle * 0.7) * 0.8;
             py    = p.ty + Math.cos(p.twinkle * 0.5) * 0.8;
             alpha = 0.8 + Math.sin(p.twinkle) * 0.2;
@@ -160,41 +158,36 @@ export default function Hero() {
             p.trail = [];
           }
 
-          /* trails */
           if (p.trail.length > 1) {
             for (let i = 1; i < p.trail.length; i++) {
               const a = (i / p.trail.length) * 0.15 * alpha;
               ctx.beginPath();
               ctx.moveTo(p.trail[i-1].x, p.trail[i-1].y);
               ctx.lineTo(p.trail[i].x,   p.trail[i].y);
-              ctx.strokeStyle = p.color + Math.floor(a * 255).toString(16).padStart(2,"00");
+              ctx.strokeStyle = p.color + Math.floor(a * 255).toString(16).padStart(2,"0");
               ctx.lineWidth   = sz * 0.5;
               ctx.stroke();
             }
           }
 
-          /* particle dot */
           ctx.beginPath();
           ctx.arc(px, py, Math.max(0.3, sz), 0, Math.PI * 2);
-          ctx.fillStyle = p.color + Math.floor(Math.min(1, alpha) * 255).toString(16).padStart(2,"00");
+          ctx.fillStyle = p.color + Math.floor(Math.min(1, alpha) * 255).toString(16).padStart(2,"0");
           ctx.fill();
 
-          /* soft glow */
           if (alpha > 0.3) {
             ctx.beginPath();
             ctx.arc(px, py, sz * 2.8, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + Math.floor(alpha * 0.1 * 255).toString(16).padStart(2,"00");
+            ctx.fillStyle = p.color + Math.floor(alpha * 0.1 * 255).toString(16).padStart(2,"0");
             ctx.fill();
           }
         });
-
-        /* NO fillText here — particles only form the name */
 
         animRef.current = requestAnimationFrame(tick);
       };
 
       animRef.current = requestAnimationFrame(tick);
-    }, 100);
+    }, 300);
 
     return () => {
       clearTimeout(timerRef.current);
