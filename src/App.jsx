@@ -29,7 +29,7 @@ function EggVoiceNote() {
   const [error, setError]       = useState(false);
 
   /* put your voice note file in public/audio/ */
-  const SRC = "/audio/love.mp3"; /* ← change filename to match your file */
+  const SRC = "/audio/egg-voice.ogg"; /* ← change filename to match your file */
 
   useEffect(() => {
     const audio = new Audio(SRC);
@@ -51,7 +51,7 @@ function EggVoiceNote() {
         setPlaying(true);
         tick(audio);
       }).catch(() => {/* autoplay blocked — she'll tap play */});
-    }, 800);
+    }, 200);
 
     return () => {
       clearTimeout(t);
@@ -199,7 +199,8 @@ function LoveExplosion({ onDone }) {
   }));
 
   useEffect(() => {
-    const t = setTimeout(onDone, 8000); /* longer to enjoy the voice note */
+    // Auto-close after 4s — enough for 2s voice note + animation
+    const t = setTimeout(onDone, 4000);
     return () => clearTimeout(t);
   }, [onDone]);
 
@@ -215,7 +216,7 @@ function LoveExplosion({ onDone }) {
         justifyContent : "center",
         flexDirection  : "column",
         pointerEvents  : "auto",
-        animation      : "eggFade 8s ease forwards",
+        animation      : "eggFade 4s ease forwards",
         cursor         : "pointer",
       }}
     >
@@ -248,7 +249,7 @@ function LoveExplosion({ onDone }) {
           position      : "relative",
           zIndex        : 5,
           textAlign     : "center",
-          animation     : "eggMsg 7.5s ease forwards",
+          animation     : "eggMsg 3.8s ease forwards",
           display       : "flex",
           flexDirection : "column",
           alignItems    : "center",
