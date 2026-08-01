@@ -54,231 +54,392 @@ function PulseRings() {
   );
 }
 
-/* ── THE LOVE TRANSITION ── */
-function LoveTransition({ active, onDone }) {
+/* ─────────────────────────────────────────────
+   LoveTransition.jsx  — drop-in replacement
+   Petals fly in → form "I love you / Rimi"
+   Hold 2 s → sparkle blast → fade to home
+   Works on any screen size, no distortion
+───────────────────────────────────────────── */
+import React, { useEffect, useRef } from "react";
+
+export default function LoveTransition({ active, onDone }) {
   const canvasRef = useRef(null);
-  const animRef   = useRef(null);
+  const stateRef  = useRef({ animId: null, doneTimer: null });
 
   useEffect(() => {
     if (!active) return;
-    const doneTimer = setTimeout(onDone, 7000);
+
+    /* ── schedule onDone ── */
+    stateRef.current.doneTimer = setTimeout(onDone, 7800);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const W = canvas.width  = window.innerWidth;
-    const H = canvas.height = window.innerHeight;
-    const cx = W / 2;
-    const cy = H / 2;
+    /* ── responsive sizing ── */
+    const resize = () => {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
 
-    /* ── Step 1: Sample text on a FIXED 600x200 canvas ── */
-    const sampleLine = (text, fontSize) => {
-      const OW = 600, OH = 200;
+    const ctx = canvas.getContext("2d");
+
+    /* ══════════════════════════════════════════
+       STEP 1 — sample text → normalised points
+       We draw on a fixed 800×220 off-screen
+       canvas, read pixels, return normalised
+       (0-1) coords so they scale to any screen.
+    ══════════════════════════════════════════ */
+    const sampleText = (text, fontSize) => {
+      const OW = 800, OH = 220;
       const off = document.createElement("canvas");
       off.width = OW; off.height = OH;
       const c = off.getContext("2d");
       c.clearRect(0, 0, OW, OH);
       c.fillStyle = "#fff";
-      c.font = `bold ${fontSize}px Georgia, serif`;
-      c.textAlign = "center";
+      c.font = `bold ${fontSize}px Georgia, "Times New Roman", serif`;
+      c.textAlign    = "center";
       c.textBaseline = "middle";
       c.fillText(text, OW / 2, OH / 2);
       const data = c.getImageData(0, 0, OW, OH).data;
-      const pts = [];
-      /* step of 6 gives ~200-400 points per line */
-      for (let y = 0; y < OH; y += 6)
-        for (let x = 0; x < OW; x += 6)
-          if (data[(y * OW + x) * 4 + 3] > 128)
-            pts.push({ nx: x / OW, ny: y / OH }); /* normalised 0-1 */
+      const pts  = [];
+      const step = 7;          /* pixel stride — controls density */
+      for (let y = 0; y < OH; y += step)
+        for (let x = 0; x < OW; x += step)
+          if (data[(y * OW + x) * 4 + 3] > 100)
+            pts.push({ nx: x / OW, ny: y / OH });
       return pts;
     };
 
-    /* normalised points — then map to screen below */
-    const raw1 = sampleLine("I love you", 110);
-    const raw2 = sampleLine("Rimi", 150);
+    const rawLine1 = sampleText("I love you", 118);
+    const rawLine2 = sampleText("Rimi",        155);
 
-    /* how wide/tall to render on screen */
-    const blockW = Math.min(W * 0.85, 640);
-    const blockH = blockW * (200 / 600); /* maintain aspect */
-    const gap    = blockH * 0.18;
-    const top1   = cy - blockH - gap / 2;
-    const top2   = cy + gap / 2;
+    /* ══════════════════════════════════════════
+       STEP 2 — map to screen coords
+       We keep a fixed aspect ratio block and
+       re-derive on every resize.
+    ══════════════════════════════════════════ */
+    const buildTargets = () => {
+      const W = canvas.width, H = canvas.height;
+      /* block never wider than 88 vw, never taller than 55 vh */
+      const blockW = Math.min(W * 0.88, 680);
+      const lineH  = blockW * (220 / 800);   /* aspect of the off-screen canvas */
+      const gap    = lineH * 0.25;
+      const totalH = lineH * 2 + gap;
+      const startY = H / 2 - totalH / 2;
 
-    const toScreen = (nx, ny, top) => ({
-      x: cx - blockW / 2 + nx * blockW,
-      y: top + ny * blockH,
+      const map = (pts, lineTop) =>
+        pts.map(p => ({
+          x: W / 2 - blockW / 2 + p.nx * blockW,
+          y: lineTop + p.ny * lineH,
+        }));
+
+      return [
+        ...map(rawLine1, startY),
+        ...map(rawLine2, startY + lineH + gap),
+      ];
+    };
+
+    let targets = buildTargets();
+
+    /* ══════════════════════════════════════════
+       STEP 3 — build particles
+    ══════════════════════════════════════════ */
+    const PETAL_COLORS = [
+      "#F08FA8","#FF85A1","#FBD5DE","#FFB3C6",   /* pinks */
+      "#F4C77B","#FFD9A0",                         /* golds */
+      "#C3A6F0","#DDD0FF",                         /* purples */
+      "#ffffff","#FFF0F5",                          /* whites */
+    ];
+
+    const W0 = canvas.width, H0 = canvas.height;
+
+    const particles = targets.map((t, i) => {
+      /* spawn from outside the viewport */
+      const edge = i % 4;
+      let sx, sy;
+      if      (edge === 0) { sx = Math.random() * W0; sy = -80; }
+      else if (edge === 1) { sx = W0 + 80;            sy = Math.random() * H0; }
+      else if (edge === 2) { sx = Math.random() * W0; sy = H0 + 80; }
+      else                 { sx = -80;                 sy = Math.random() * H0; }
+
+      const angle = Math.atan2(t.y - H0 / 2, t.x - W0 / 2);
+      return {
+        sx, sy,
+        tx: t.x, ty: t.y,
+        /* explode out in the same radial direction */
+        ex: t.x + Math.cos(angle) * Math.max(W0, H0) * 1.4,
+        ey: t.y + Math.sin(angle) * Math.max(W0, H0) * 1.4,
+        color : PETAL_COLORS[i % PETAL_COLORS.length],
+        type  : i % 3,          /* 0=petal  1=heart  2=star */
+        sz    : 5 + Math.random() * 6,
+        rot   : Math.random() * Math.PI * 2,
+        rotSpd: (Math.random() - 0.5) * 0.05,
+        drift : (Math.random() - 0.5) * 2,   /* lateral wobble */
+        phase : Math.random() * Math.PI * 2, /* wobble phase offset */
+      };
     });
 
-    const pts1 = raw1.map(p => toScreen(p.nx, p.ny, top1));
-    const pts2 = raw2.map(p => toScreen(p.nx, p.ny, top2));
-    const allPts = [...pts1, ...pts2];
+    /* ══════════════════════════════════════════
+       STEP 4 — sparkles for the blast
+    ══════════════════════════════════════════ */
+    const sparks = Array.from({ length: 90 }, (_, i) => {
+      const cx = canvas.width / 2, cy = canvas.height / 2;
+      const a  = Math.random() * Math.PI * 2;
+      const sp = 4 + Math.random() * 8;
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        color: PETAL_COLORS[i % PETAL_COLORS.length],
+        sz: 3 + Math.random() * 5,
+        life: 1,
+        decay: 0.018 + Math.random() * 0.012,
+      };
+    });
 
-    if (allPts.length === 0) return;
-
-    const COLORS = ["#F08FA8","#FF85A1","#FBD5DE","#F4C77B","#C3A6F0","#fff","#FFB3C6"];
-
-    /* draw a single petal/heart/star */
-    const drawShape = (ctx, x, y, sz, rot, color, alpha, type) => {
+    /* ══════════════════════════════════════════
+       STEP 5 — draw helpers
+    ══════════════════════════════════════════ */
+    const drawPetal = (ctx, x, y, sz, rot, color, alpha) => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
       ctx.translate(x, y);
       ctx.rotate(rot);
       ctx.shadowColor = color;
-      ctx.shadowBlur  = sz * 1.5;
+      ctx.shadowBlur  = sz * 2;
       ctx.fillStyle   = color;
-
-      if (type === 0) {
-        /* heart ♥ */
-        const s = sz * 0.45;
-        ctx.beginPath();
-        ctx.moveTo(0, s * 0.4);
-        ctx.bezierCurveTo( s*1.1, -s*0.4,  s*1.8,  s*0.6, 0,  s*1.7);
-        ctx.bezierCurveTo(-s*1.8,  s*0.6, -s*1.1, -s*0.4, 0,  s*0.4);
-        ctx.fill();
-      } else if (type === 1) {
-        /* 5-petal flower */
-        for (let k = 0; k < 5; k++) {
-          ctx.save();
-          ctx.rotate((k * Math.PI * 2) / 5);
-          ctx.beginPath();
-          ctx.ellipse(0, -sz * 0.45, sz * 0.22, sz * 0.48, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-        ctx.beginPath();
-        ctx.arc(0, 0, sz * 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff";
-        ctx.fill();
-      } else if (type === 2) {
-        /* 4-point star */
-        ctx.beginPath();
-        for (let k = 0; k < 8; k++) {
-          const r = k % 2 === 0 ? sz * 0.55 : sz * 0.2;
-          const a = (k * Math.PI) / 4;
-          k === 0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r)
-                  : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
-        }
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        /* glowing circle */
-        ctx.beginPath();
-        ctx.arc(0, 0, sz * 0.42, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      /* ellipse petal */
+      ctx.beginPath();
+      ctx.ellipse(0, -sz * 0.4, sz * 0.28, sz * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     };
 
-    /* each particle starts scattered randomly around screen edge */
-    const particles = allPts.map((pt, i) => {
-      const edge = Math.floor(Math.random() * 4);
-      let sx, sy;
-      if      (edge === 0) { sx = Math.random() * W; sy = -60; }
-      else if (edge === 1) { sx = W + 60; sy = Math.random() * H; }
-      else if (edge === 2) { sx = Math.random() * W; sy = H + 60; }
-      else                 { sx = -60; sy = Math.random() * H; }
+    const drawHeart = (ctx, x, y, sz, rot, color, alpha) => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = sz * 2;
+      ctx.fillStyle   = color;
+      const s = sz * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(0, s * 0.5);
+      ctx.bezierCurveTo( s*1.1, -s*0.5,  s*1.8,  s*0.7, 0,  s*1.8);
+      ctx.bezierCurveTo(-s*1.8,  s*0.7, -s*1.1, -s*0.5, 0,  s*0.5);
+      ctx.fill();
+      ctx.restore();
+    };
 
-      const angle = Math.atan2(pt.y - cy, pt.x - cx);
-      return {
-        sx, sy,
-        tx: pt.x, ty: pt.y,
-        /* explode back outward from target in same direction it came from */
-        ex: pt.x + Math.cos(angle) * Math.max(W, H),
-        ey: pt.y + Math.sin(angle) * Math.max(W, H),
-        color : COLORS[i % COLORS.length],
-        type  : i % 4,
-        sz    : 7 + Math.random() * 7,
-        rot   : Math.random() * Math.PI * 2,
-        rotSpd: (Math.random() - 0.5) * 0.06,
-      };
-    });
+    const drawStar = (ctx, x, y, sz, rot, color, alpha) => {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.shadowColor = color;
+      ctx.shadowBlur  = sz * 2.5;
+      ctx.fillStyle   = color;
+      ctx.beginPath();
+      for (let k = 0; k < 8; k++) {
+        const r = k % 2 === 0 ? sz * 0.52 : sz * 0.22;
+        const a = (k * Math.PI) / 4;
+        k === 0
+          ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+          : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
 
-    /* phases in frames at 60fps */
-    const F_GATHER  = 150; /* 2.5s — fly in */
-    const F_HOLD    = 120; /* 2.0s — hold as text */
-    const F_EXPLODE =  80; /* 1.3s — blast out */
-    const F_TOTAL   = F_GATHER + F_HOLD + F_EXPLODE;
-    let f = 0;
+    const drawParticle = (ctx, x, y, sz, rot, color, alpha, type) => {
+      if (type === 1) drawHeart(ctx, x, y, sz, rot, color, alpha);
+      else if (type === 2) drawStar(ctx, x, y, sz, rot, color, alpha);
+      else drawPetal(ctx, x, y, sz, rot, color, alpha);
+    };
 
-    const easeOut   = t => 1 - Math.pow(1 - t, 3);
-    const easeIn    = t => t * t * t;
-    const easeInOut = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+    /* ══════════════════════════════════════════
+       STEP 6 — animation phases (frames @60fps)
+       GATHER  2.5 s  →  HOLD  2.5 s  →  BLAST  0.9 s  →  FADE  1 s
+    ══════════════════════════════════════════ */
+    const FPS        = 60;
+    const F_GATHER   = Math.round(2.5  * FPS);
+    const F_HOLD     = Math.round(2.5  * FPS);
+    const F_BLAST    = Math.round(0.9  * FPS);
+    const F_FADE     = Math.round(1.0  * FPS);
+    const F_TOTAL    = F_GATHER + F_HOLD + F_BLAST + F_FADE;
+
+    const easeOut3   = t => 1 - Math.pow(1 - t, 3);
+    const easeIn3    = t => t * t * t;
+
+    let frame = 0;
+    let sparksActive = false;
 
     const tick = () => {
-      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
-      f++;
+      frame++;
 
+      /* ── recalculate targets if canvas was resized ── */
+      if (W !== W0 || H !== H0) {
+        const fresh = buildTargets();
+        fresh.forEach((t, i) => {
+          if (particles[i]) {
+            particles[i].tx = t.x;
+            particles[i].ty = t.y;
+          }
+        });
+      }
+
+      /* ── phase clocks ── */
       let ph, lt;
-      if      (f <= F_GATHER)            { ph = "gather";  lt = f / F_GATHER; }
-      else if (f <= F_GATHER + F_HOLD)   { ph = "hold";    lt = (f - F_GATHER) / F_HOLD; }
-      else if (f <= F_TOTAL)             { ph = "explode"; lt = (f - F_GATHER - F_HOLD) / F_EXPLODE; }
-      else { cancelAnimationFrame(animRef.current); return; }
+      if      (frame <= F_GATHER)                        { ph = "gather";  lt = frame / F_GATHER; }
+      else if (frame <= F_GATHER + F_HOLD)               { ph = "hold";    lt = (frame - F_GATHER) / F_HOLD; }
+      else if (frame <= F_GATHER + F_HOLD + F_BLAST)     { ph = "blast";   lt = (frame - F_GATHER - F_HOLD) / F_BLAST; }
+      else if (frame <= F_TOTAL)                         { ph = "fade";    lt = (frame - F_GATHER - F_HOLD - F_BLAST) / F_FADE; }
+      else { cancelAnimationFrame(stateRef.current.animId); return; }
 
+      /* ── kick sparkles at start of blast ── */
+      if (ph === "blast" && !sparksActive) {
+        sparksActive = true;
+        /* scatter from centre of text block */
+        const cx = W / 2;
+        const blockW = Math.min(W * 0.88, 680);
+        const lineH  = blockW * (220 / 800);
+        const cy     = H / 2;
+        sparks.forEach(s => {
+          s.x = cx + (Math.random() - 0.5) * blockW * 0.8;
+          s.y = cy + (Math.random() - 0.5) * lineH * 2.4;
+          const a  = Math.random() * Math.PI * 2;
+          const sp = 3 + Math.random() * 10;
+          s.vx = Math.cos(a) * sp;
+          s.vy = Math.sin(a) * sp;
+          s.life = 1;
+        });
+      }
+
+      /* ── draw particles ── */
       particles.forEach((p, i) => {
         p.rot += p.rotSpd;
         let px, py, alpha, sz;
 
         if (ph === "gather") {
-          const e = easeOut(lt);
-          px    = p.sx + (p.tx - p.sx) * e;
-          py    = p.sy + (p.ty - p.sy) * e;
-          alpha = e;
-          sz    = p.sz * (0.5 + e * 0.5);
+          const e = easeOut3(lt);
+          /* gentle S-curve wobble on the way in */
+          const wobble = Math.sin(lt * Math.PI * 3 + p.phase) * 18 * (1 - lt);
+          px    = p.sx + (p.tx - p.sx) * e + wobble * Math.cos(p.rot);
+          py    = p.sy + (p.ty - p.sy) * e + wobble * Math.sin(p.rot);
+          alpha = lt < 0.08 ? lt / 0.08 : 1;
+          sz    = p.sz * (0.4 + e * 0.6);
 
         } else if (ph === "hold") {
-          /* gentle pulse in place */
-          const pulse = Math.sin(f * 0.08 + i * 0.3) * 1.5;
-          px    = p.tx + pulse;
-          py    = p.ty + Math.cos(f * 0.06 + i * 0.2) * 1.0;
-          alpha = 0.9 + Math.sin(f * 0.1 + i * 0.15) * 0.1;
-          sz    = p.sz * (1 + Math.sin(f * 0.07 + i * 0.1) * 0.08);
-          p.rotSpd = 0.02;
+          /* breathe gently in place */
+          const breath = Math.sin(frame * 0.07 + p.phase) * 1.6;
+          px    = p.tx + breath * 0.6;
+          py    = p.ty + Math.cos(frame * 0.055 + p.phase) * 1.1;
+          alpha = 0.92 + Math.sin(frame * 0.09 + p.phase) * 0.08;
+          sz    = p.sz * (1 + Math.sin(frame * 0.065 + p.phase) * 0.07);
+          p.rotSpd = 0.015;
 
-        } else {
-          const e = easeIn(lt);
+        } else if (ph === "blast") {
+          const e = easeIn3(lt);
           px    = p.tx + (p.ex - p.tx) * e;
           py    = p.ty + (p.ey - p.ty) * e;
-          alpha = Math.max(0, 1 - e * 1.2);
-          sz    = p.sz * (1 + e * 3);
-          p.rotSpd *= 1.12;
+          alpha = Math.max(0, 1 - e * 1.15);
+          sz    = p.sz * (1 + e * 4);
+          p.rotSpd *= 1.1;
+
+        } else { /* fade — particles are gone */
+          return;
         }
 
-        drawShape(ctx, px, py, sz, p.rot, p.color, alpha, p.type);
+        drawParticle(ctx, px, py, sz, p.rot, p.color, alpha, p.type);
       });
 
-      animRef.current = requestAnimationFrame(tick);
+      /* ── draw sparkles during blast + fade ── */
+      if (ph === "blast" || ph === "fade") {
+        const globalFade = ph === "fade" ? Math.max(0, 1 - lt) : 1;
+        sparks.forEach(s => {
+          s.x  += s.vx;
+          s.y  += s.vy;
+          s.vy += 0.18;           /* gentle gravity */
+          s.vx *= 0.97;
+          s.life = Math.max(0, s.life - s.decay);
+          if (s.life <= 0) return;
+
+          ctx.save();
+          ctx.globalAlpha = s.life * globalFade;
+          ctx.shadowColor = s.color;
+          ctx.shadowBlur  = s.sz * 3;
+          ctx.fillStyle   = s.color;
+          /* tiny 4-point star */
+          ctx.translate(s.x, s.y);
+          ctx.beginPath();
+          for (let k = 0; k < 8; k++) {
+            const r = k % 2 === 0 ? s.sz : s.sz * 0.35;
+            const a = (k * Math.PI) / 4;
+            k === 0
+              ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+              : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        });
+      }
+
+      stateRef.current.animId = requestAnimationFrame(tick);
     };
 
-    animRef.current = requestAnimationFrame(tick);
+    stateRef.current.animId = requestAnimationFrame(tick);
+
     return () => {
-      clearTimeout(doneTimer);
-      cancelAnimationFrame(animRef.current);
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(stateRef.current.animId);
+      clearTimeout(stateRef.current.doneTimer);
     };
   }, [active, onDone]);
 
   if (!active) return null;
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 300,
-      background: "rgba(8,6,20,0.97)",
-      animation: "loveTransFade 7s ease forwards",
-      overflow: "hidden", pointerEvents: "none",
-    }}>
-      <div aria-hidden="true" style={{
-        position: "absolute", left: "50%", top: "50%",
-        transform: "translate(-50%,-50%)",
-        width: "80vw", height: "60vw",
-        maxWidth: 700, maxHeight: 500,
+    <div
+      aria-hidden="true"
+      style={{
+        position : "fixed",
+        inset     : 0,
+        zIndex    : 300,
+        background: "rgba(8, 6, 20, 0.97)",
+        animation : "loveTransFade 7.8s ease forwards",
+        overflow  : "hidden",
+        pointerEvents: "none",
+      }}
+    >
+      {/* soft radial glow behind the text */}
+      <div style={{
+        position  : "absolute",
+        left      : "50%",
+        top       : "50%",
+        transform : "translate(-50%, -50%)",
+        width     : "min(90vw, 700px)",
+        height    : "min(60vw, 420px)",
         borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(240,143,168,0.18), transparent 70%)",
-        animation: "loveTransGlow 7s ease forwards",
+        background: "radial-gradient(ellipse, rgba(240,143,168,0.20) 0%, transparent 70%)",
+        animation : "loveTransGlow 7.8s ease forwards",
       }} />
-      <canvas ref={canvasRef} style={{
-        position: "absolute", inset: 0,
-        width: "100%", height: "100%",
-      }} />
+
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          inset    : 0,
+          width    : "100%",
+          height   : "100%",
+          display  : "block",
+        }}
+      />
     </div>
   );
 }

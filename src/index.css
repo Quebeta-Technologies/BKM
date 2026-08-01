@@ -382,42 +382,25 @@ svg {
 
 
 
-/* ── LOVE TRANSITION ── */
+/* ─────────────────────────────────────────────
+   LOVE TRANSITION KEYFRAMES
+   Paste these into your global CSS file,
+   replacing any old loveTransFade / loveTransGlow
+   blocks.
+───────────────────────────────────────────── */
+
+/* Overlay wrapper: fade in fast, hold, fade out at the end */
 @keyframes loveTransFade {
   0%   { opacity: 0; }
-  5%   { opacity: 1; }
-  76%  { opacity: 1; }
+  4%   { opacity: 1; }
+  80%  { opacity: 1; }
   100% { opacity: 0; }
 }
-@keyframes loveTransGlow {
-  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
-  20%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-  76%  { opacity: 0.6; }
-  100% { opacity: 0; transform: translate(-50%,-50%) scale(2); }
-}
 
-@keyframes loveTransText {
-  0%   { opacity: 0; transform: scale(0.6) translateY(30px); }
-  18%  { opacity: 1; transform: scale(1.06) translateY(0); }
-  35%  { transform: scale(1); }
-  72%  { opacity: 1; }
-  100% { opacity: 0; transform: scale(1.05) translateY(-20px); }
-}
-@keyframes loveTransName {
-  0%   { opacity: 0; transform: scale(0.7) translateY(20px); }
-  22%  { opacity: 1; transform: scale(1.04) translateY(0); }
-  40%  { transform: scale(1); }
-  72%  { opacity: 1; }
-  100% { opacity: 0; transform: scale(1.06) translateY(-15px); }
-}
-@keyframes loveTransPetal {
-  0%   { opacity: 0; transform: translateY(-20px) translateX(0) rotate(0deg); }
-  10%  { opacity: 1; }
-  85%  { opacity: 0.7; }
-  100% { opacity: 0; transform: translateY(105vh) translateX(var(--pdrift)) rotate(var(--prot)); }
-}
-@keyframes loveTransSpark {
-  0%   { opacity: 0; transform: scale(0) rotate(0deg); }
-  40%  { opacity: 1; transform: scale(1.4) rotate(180deg); }
-  100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
+/* Background glow: bloom in, shrink out */
+@keyframes loveTransGlow {
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.4); }
+  15%  { opacity: 1;   transform: translate(-50%, -50%) scale(1);   }
+  70%  { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(2.2); }
 }
