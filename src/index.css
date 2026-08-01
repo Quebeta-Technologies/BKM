@@ -337,3 +337,10 @@ svg {
   outline: none !important;
   background: transparent !important;
 }
+
+
+
+.star-hit:focus,
+.star-hit:focus-visible {
+  outline: none !important;
+}

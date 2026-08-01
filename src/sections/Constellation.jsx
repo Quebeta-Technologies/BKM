@@ -132,6 +132,7 @@ export default function Constellation() {
                   (e.key === "Enter" || e.key === " ") &&
                   (e.preventDefault(), select(m.id))
                 }
+                style={{ outline: "none" }}
               >
                 {/* hit area */}
                 <circle cx={m.x} cy={m.y} r="38" fill="transparent" />
