@@ -395,7 +395,7 @@ svg {
   72%  { opacity: 0.7; }
   100% { opacity: 0; transform: translate(-50%,-50%) scale(2.5); }
 }
-}
+
 @keyframes loveTransText {
   0%   { opacity: 0; transform: scale(0.6) translateY(30px); }
   18%  { opacity: 1; transform: scale(1.06) translateY(0); }
