@@ -6,7 +6,7 @@
 
 /* ── 1. WHO ──────────────────────────────────────────────────────────────── */
 
-export const HER_NAME = "Meri Jaan"; // her name, or your nickname for her
+export const HER_NAME = "Rimi"; // her name, or your nickname for her
 export const YOUR_SIGNOFF = "Yours, always"; // how you sign your letters
 
 /* ── 2. THE LOCK ─────────────────────────────────────────────────────────── */
@@ -20,7 +20,7 @@ export const LOCK = {
   wrongMessages: [
     "That's not it. Think about August.",
     "Close. But you know this one.",
-    "Try again. I'll wait — I'm good at waiting for you.",
+    "Try again. I'll wait I'm good at waiting for you.",
     "Still no. Scroll up in our chat if you have to. I won't judge.",
   ],
 };
