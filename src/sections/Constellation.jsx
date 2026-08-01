@@ -141,25 +141,27 @@ function PhotoPlaceholder({ label }) {
 }
 
 /* ─── memo card (detail panel) ───────────────── */
-function MemoCard({ milestone, gap, photos }) {
+function MemoCard({ milestone, gap }) {
   const [imgIdx, setImgIdx] = useState(0);
-  const hasPhotos = photos && photos.length > 0;
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
 
-  // reset on milestone change
   useEffect(() => setImgIdx(0), [milestone.id]);
+
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
 
   return (
     <div style={{
-      display        : "grid",
-      gridTemplateColumns: "1fr",
-      gap            : 0,
-      background     : "rgba(255,255,255,0.025)",
-      border         : "1px solid rgba(240,143,168,0.15)",
-      borderRadius   : 20,
-      overflow       : "hidden",
-      backdropFilter : "blur(16px)",
-      animation      : "memoFadeIn 0.45s cubic-bezier(.2,.8,.3,1)",
-      boxShadow      : "0 8px 48px rgba(0,0,0,0.35), 0 0 0 1px rgba(240,143,168,0.08)",
+      background    : "rgba(255,255,255,0.025)",
+      border        : "1px solid rgba(240,143,168,0.15)",
+      borderRadius  : 20,
+      overflow      : "hidden",
+      backdropFilter: "blur(16px)",
+      animation     : "memoFadeIn 0.45s cubic-bezier(.2,.8,.3,1)",
+      boxShadow     : "0 8px 48px rgba(0,0,0,0.35), 0 0 0 1px rgba(240,143,168,0.08)",
     }}>
 
       {/* top accent line */}
@@ -168,15 +170,34 @@ function MemoCard({ milestone, gap, photos }) {
         background:"linear-gradient(90deg,transparent,rgba(240,143,168,0.6) 30%,rgba(195,166,240,0.6) 70%,transparent)",
       }}/>
 
+      {/* photo — full width on mobile, hidden on desktop (shown on right) */}
+      {isMobile && (
+        <div style={{ width:"100%", aspectRatio:"16/9", position:"relative" }}>
+          <PhotoSlot
+            src={milestone.photos?.[imgIdx]}
+            alt={milestone.label}
+            style={{ width:"100%", height:"100%", borderRadius:0, border:"none",
+              boxShadow:"none", transform:"none" }}
+          />
+          {/* gradient fade into card body */}
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0, height:60,
+            background:"linear-gradient(to bottom,transparent,rgba(12,8,28,0.95))",
+            pointerEvents:"none",
+          }}/>
+        </div>
+      )}
+
+      {/* body: side-by-side on desktop, stacked on mobile */}
       <div style={{
-        display:"grid",
-        gridTemplateColumns: "1fr auto",
-        gap:0,
+        display              : isMobile ? "block" : "grid",
+        gridTemplateColumns  : isMobile ? undefined : "1fr 200px",
+        gap                  : 0,
       }}>
-        {/* left — text content */}
-        <div style={{ padding:"28px 32px" }}>
+        {/* text */}
+        <div style={{ padding: isMobile ? "20px 20px 24px" : "28px 32px" }}>
           <p style={{
-            fontSize:"0.55rem", letterSpacing:"0.38em",
+            fontSize:"0.55rem", letterSpacing:"0.35em",
             textTransform:"uppercase",
             color:"var(--gold)", opacity:0.8,
             fontFamily:"Jost,sans-serif",
@@ -194,7 +215,7 @@ function MemoCard({ milestone, gap, photos }) {
 
           <h3 style={{
             fontFamily  : "Cormorant Garamond, serif",
-            fontSize    : "clamp(1.5rem,3vw,2.2rem)",
+            fontSize    : isMobile ? "1.6rem" : "clamp(1.5rem,3vw,2.2rem)",
             fontWeight  : 400,
             color       : "var(--cream)",
             marginBottom: 4,
@@ -204,86 +225,78 @@ function MemoCard({ milestone, gap, photos }) {
           </h3>
 
           <p style={{
-            fontFamily  : "Parisienne, cursive",
-            fontSize    : "1.3rem",
-            color       : "var(--rose)",
-            marginBottom: 18,
-            textShadow  : "0 0 16px rgba(240,143,168,0.4)",
+            fontFamily : "Parisienne, cursive",
+            fontSize   : "1.2rem",
+            color      : "var(--rose)",
+            marginBottom: 14,
+            textShadow : "0 0 16px rgba(240,143,168,0.4)",
           }}>
             {fmtDate(milestone.date)}
           </p>
 
-          {/* emoji icon for the milestone */}
           <div style={{
-            fontSize:"1.6rem", marginBottom:14,
+            fontSize:"1.4rem", marginBottom:12,
             filter:"drop-shadow(0 0 8px rgba(240,143,168,0.4))",
           }}>
             {milestone.emoji || "✦"}
           </div>
 
           <p style={{
-            color       : "rgba(220,210,230,0.8)",
-            fontSize    : "0.9rem",
-            lineHeight  : 1.75,
-            maxWidth    : 480,
-            fontFamily  : "Jost, sans-serif",
-            fontWeight  : 300,
+            color      : "rgba(220,210,230,0.8)",
+            fontSize   : isMobile ? "0.85rem" : "0.9rem",
+            lineHeight : 1.75,
+            fontFamily : "Jost, sans-serif",
+            fontWeight : 300,
           }}>
             {milestone.text}
           </p>
-        </div>
 
-        {/* right — photo stack */}
-        <div style={{
-          width       : "clamp(160px,28vw,260px)",
-          padding     : "24px 24px 24px 0",
-          display     : "flex",
-          flexDirection:"column",
-          gap         : 10,
-          alignItems  : "center",
-          justifyContent:"center",
-        }}>
-          {/* main photo */}
-          <PhotoSlot
-            src={milestone.photos?.[imgIdx]}
-            alt={milestone.label}
-            style={{ width:"100%", aspectRatio:"4/5" }}
-          />
-
-          {/* thumbnail row if multiple photos */}
-          {milestone.photos?.length > 1 && (
-            <div style={{ display:"flex", gap:6, justifyContent:"center" }}>
-              {milestone.photos.map((src, i) => (
-                <div
-                  key={i}
-                  onClick={() => setImgIdx(i)}
-                  style={{
-                    width:28, height:28, borderRadius:6,
-                    overflow:"hidden", cursor:"pointer",
-                    border:`1px solid rgba(240,143,168,${i===imgIdx?0.8:0.25})`,
-                    opacity: i === imgIdx ? 1 : 0.5,
-                    transition:"all 0.2s",
-                  }}
-                >
-                  <img src={src} style={{ width:"100%",height:"100%",objectFit:"cover" }}/>
-                </div>
+          {/* thumbnail dots on mobile (if multiple photos) */}
+          {isMobile && milestone.photos?.length > 1 && (
+            <div style={{ display:"flex", gap:6, marginTop:16 }}>
+              {milestone.photos.map((_, i) => (
+                <button key={i} onClick={() => setImgIdx(i)} style={{
+                  width:8, height:8, borderRadius:4, border:"none", padding:0,
+                  background: i===imgIdx ? "#F08FA8" : "rgba(255,255,255,0.2)",
+                  cursor:"pointer", transition:"all 0.2s",
+                  transform: i===imgIdx ? "scale(1.3)" : "scale(1)",
+                }}/>
               ))}
             </div>
           )}
-
-          {/* placeholder hint */}
-          {!milestone.photos?.length && (
-            <p style={{
-              fontSize:"0.55rem", letterSpacing:"0.2em",
-              textTransform:"uppercase",
-              color:"rgba(240,143,168,0.35)",
-              textAlign:"center",
-              fontFamily:"Jost,sans-serif",
-            }}>
-              add photos in data.js
-            </p>
-          )}
         </div>
+
+        {/* photo column — desktop only */}
+        {!isMobile && (
+          <div style={{
+            padding        : "20px 20px 20px 0",
+            display        : "flex",
+            flexDirection  : "column",
+            gap            : 8,
+            alignItems     : "center",
+            justifyContent : "center",
+          }}>
+            <PhotoSlot
+              src={milestone.photos?.[imgIdx]}
+              alt={milestone.label}
+              style={{ width:"100%", aspectRatio:"4/5" }}
+            />
+            {milestone.photos?.length > 1 && (
+              <div style={{ display:"flex", gap:5, justifyContent:"center" }}>
+                {milestone.photos.map((_, i) => (
+                  <button key={i} onClick={() => setImgIdx(i)} style={{
+                    width: i===imgIdx ? 18 : 7, height:7,
+                    borderRadius:4, border:"none", padding:0,
+                    background: i===imgIdx
+                      ? "linear-gradient(90deg,#F08FA8,#C3A6F0)"
+                      : "rgba(255,255,255,0.2)",
+                    cursor:"pointer", transition:"all 0.3s",
+                  }}/>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -317,7 +330,7 @@ export default function Constellation() {
   const pathD = buildPath(MILESTONES);
 
   return (
-    <section style={{ padding:"4rem 1.5rem 3rem", maxWidth:940, margin:"0 auto" }}>
+    <section style={{ padding:"3rem 1rem 3rem", maxWidth:940, margin:"0 auto" }}>
 
       <style>{`
         @keyframes photoIconFloat {
@@ -567,7 +580,7 @@ export default function Constellation() {
       </div>
 
       {/* detail card */}
-      <div style={{ marginTop:24 }} key={selected}>
+      <div style={{ marginTop:20, padding:"0 4px" }} key={selected}>
         <MemoCard milestone={active} gap={gap}/>
       </div>
 
