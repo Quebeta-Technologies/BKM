@@ -186,9 +186,9 @@ export const CHAT = [
 /* Leave src as null for a placeholder. tilt is the rotation in degrees.    */
 
 export const PHOTOS = [
-  { src: null, caption: "The first one",      tilt: -4 },
+  { src: "/photos/first date.jpeg", caption: "The first one",      tilt: -4 },
   { src: null, caption: "you, mid-laugh",     tilt:  3 },
-  { src: null, caption: "25.12.25",           tilt: -2 },
+  { src: "/photos/first date.jpeg", caption: "24.12.25",           tilt: -2 },
   { src: null, caption: "us, no reason",      tilt:  5 },
   { src: null, caption: "your favourite",     tilt: -5 },
   { src: null, caption: "2.13 am",            tilt:  2 },
