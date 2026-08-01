@@ -14,7 +14,7 @@ export const YOUR_SIGNOFF = "Your Biki";
 export const LOCK = {
   enabled: true,
   password: "10082025",
-  question: "The day i first said hi to you.",
+  question: "Hint: The day I first said hi to you.",
   hint: "ddmmyyyy",
   wrongMessages: [
     "That's not it. Think about August.",
@@ -57,7 +57,7 @@ export const MILESTONES = [
       // "/photos/hello-1.jpg",  ← add your photos here
     ],
     text:
-      "One message. That's genuinely all it took. I typed it, deleted it, typed it again, and hit send before I could talk myself out of it. You replied, and something in my chest went quiet in a way it hadn't in years. I didn't know it yet, but that little grey bubble on 10 August was the first day of the best thing that has ever happened to me.",
+      "One message. That's genuinely all it took. I never thought that one message will end up us here. From not knowing each other for years to sharing souls with two bodies. I am gald that your sister gave me your number. You replied, and something in my chest went quiet in a way it hadn't in years. I didn't know it yet, but that little grey bubble on 10 August was the first day of the best thing that has ever happened to me for years. You are the best thing in my life.",
   },
   {
     id: "meet",
@@ -73,7 +73,7 @@ export const MILESTONES = [
       // "/photos/meet-2.jpg",  ← multiple photos supported, dots appear below
     ],
     text:
-      "Fourteen days of talking, and then you walked in. I had imagined it about a hundred times and I still got it wrong, because nothing I imagined had your laugh in it. I remember thinking, very calmly and very clearly: oh no. Oh no, I'm going to love this person.",
+      "Fourteen days of talking, and then you walked in. That day when I was waiting for you at the gate my heart was pumping faster than a 1000cc engine. I had imagined it about a hundred times and I still got it wrong, because nothing I imagined had your laugh in it. I remember thinking, very calmly and very clearly: oh no. Oh no, I'm going to love this person.",
   },
   {
     id: "date",
@@ -87,7 +87,7 @@ export const MILESTONES = [
       "/photos/first date.jpeg"
     ],
     text:
-      "Of every day in the year, we picked the one the whole world already keeps for the people it loves. You looked so beautiful I forgot half of what I'd planned to say. We stayed out longer than we meant to. Every Christmas from now on has a second meaning for me, and it's you.",
+      "Of every day in the year, we picked the one the whole world already keeps for the people it loves. You looked so beautiful I forgot half of what I'd planned to say. We stayed out longer than we meant to. Every Christmas from now on has a second meaning for me, and it's you. That day was very special because we spend the day together with shopping food and lastly the park. The park was the most memoable..... The way rest your head on my shoulder, The way we holded each others hand, I got a chacnce to kiss you I was very nervous but after that when your wet lips touched my cheeks my whole body was on off state. I won't forget that feeling.",
   },
   {
     id: "kiss",
@@ -101,7 +101,7 @@ export const MILESTONES = [
       // "/photos/kiss-1.jpg",
     ],
     text:
-      "A whole new year, and the first thing in it was you. I'm not going to try to describe it, because words go a bit useless around it. I'll just say this: whatever the rest of 2026 decides to do, it opened with the best moment of my life, and I got to be there for it.",
+      "A whole new year, and the first thing in it was you. I'm not going to try to describe it, because words go a bit useless around it. I'll just say this: whatever the rest of 2026 decides to do, it opened with the best moment of my life, and I got to be there for it. I remeber how i manupulated you and kissed on your lips, I will never forget that. Perviously New year was just a date change to me but now every new year i will remember the day 1st Jan 2026.",
   },
 ];
 
@@ -134,7 +134,7 @@ export const LETTERS = [
     seal: "Open when you miss me",
     title: "I miss you too. Constantly.",
     body: [
-      "Right now, wherever I am, I have almost certainly just picked up my phone to tell you something small and pointless. That's the whole shape of missing you — it isn't dramatic, it's a hundred tiny interruptions a day.",
+      "Right now, wherever I am, I have almost certainly just picked up my phone to tell you something small and pointless. That's the whole shape of missing you it isn't dramatic, it's a hundred tiny interruptions a day.",
       "I miss the way you fall asleep on video calls and get defensive about it. I miss you stealing food off my plate after saying you weren't hungry. I miss the pause before you laugh.",
       "Distance is just a number of hours, and I have counted every one of them, and every single one has been worth it.",
     ],
@@ -145,7 +145,7 @@ export const LETTERS = [
     title: "Hi. It's me, from the beginning.",
     body: [
       "If you're reading this, we made it further than the part where everything was new and easy. Good. I hoped we would.",
-      "I want you to know that the person writing this — the one who was nervous on 24 August 2025, who couldn't sleep after our first date — already knew. Not the details. Just you.",
+      "I want you to know that the person writing this the one who was nervous on 24 August 2025, who couldn't sleep after our first date already knew. Not the details. Just you.",
       "So whatever the last ten years put us through: thank you for staying. Thank you for the life. I'd choose the exact same thing again, right from that first message.",
     ],
   },
@@ -205,7 +205,9 @@ export const FINALE = {
   heading: ["I don't need a day on a calendar", "to know what you are to me."],
   paragraphs: [
     "But I'll take the excuse. Because there are things I don't say often enough, and today I get to say all of them at once.",
-    "You are the best thing that has happened to me. Not the most exciting, not the most dramatic — the best. The kind of good that shows up in ordinary weeks and quietly makes them worth remembering.",
+    "You are the best thing that has happened to me. Not the most exciting, not the most dramatic, the best. The kind of good that shows up in ordinary weeks and quietly makes them worth remembering.",
+    "And Sorry for all those tears afterall all were to make you strong.",
+    "Now you are strong enough and i promise there won't be any tears in your eyes."
     "Thank you for replying that night. Thank you for every day since. Thank you for being someone I get to be completely, unglamorously myself around.",
   ],
   closing: "Happy Girlfriend's Day, my love. You are so, so wildly loved.",
@@ -216,6 +218,6 @@ export const FINALE = {
     "I could do this all day.",
     "Still nowhere close to how much.",
     "Genuinely, I'm running out of hearts.",
-    "Fine. You win. I love you the most.",
+    "Fine. You win. You love the most.",
   ],
 };
