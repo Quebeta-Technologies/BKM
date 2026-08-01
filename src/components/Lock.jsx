@@ -61,7 +61,7 @@ function LoveTransition({ active, onDone }) {
 
   useEffect(() => {
     if (!active) return;
-    const doneTimer = setTimeout(onDone, 5500);
+    const doneTimer = setTimeout(onDone, 8000);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,7 +83,7 @@ function LoveTransition({ active, onDone }) {
       c.fillText(text, W / 2, 110);
       const data = c.getImageData(0, 0, W, 220).data;
       const pts = [];
-      const step = Math.max(3, Math.floor(W / 120));
+      const step = Math.max(2, Math.floor(W / 200));
       for (let y = 0; y < 220; y += step)
         for (let x = 0; x < W; x += step)
           if (data[(y * W + x) * 4 + 3] > 100)
@@ -91,8 +91,8 @@ function LoveTransition({ active, onDone }) {
       return pts;
     };
 
-    const fs1 = Math.min(W * 0.09, 72);
-    const fs2 = Math.min(W * 0.13, 100);
+    const fs1 = Math.min(W * 0.13, 110);
+    const fs2 = Math.min(W * 0.19, 150);
     const line1Y = cy - fs1 * 0.8;
     const line2Y = cy + fs2 * 0.55;
 
@@ -188,7 +188,7 @@ function LoveTransition({ active, onDone }) {
         x: cx + Math.cos(angle) * dist,
         y: cy + Math.sin(angle) * dist,
         color, shape,
-        size: 6 + Math.random() * 6,
+        size: 9 + Math.random() * 8,
         rot: Math.random() * Math.PI * 2,
         rotSpd: (Math.random() - 0.5) * 0.08,
         alpha: 0,
@@ -196,7 +196,7 @@ function LoveTransition({ active, onDone }) {
       };
     });
 
-    const GATHER = 90, HOLD = 80, EXPLODE = 60;
+    const GATHER = 160, HOLD = 130, EXPLODE = 80;
     const TOTAL = GATHER + HOLD + EXPLODE;
     let t = 0;
 
@@ -267,7 +267,7 @@ function LoveTransition({ active, onDone }) {
     <div style={{
       position: "fixed", inset: 0, zIndex: 300,
       background: "rgba(8,6,20,0.97)",
-      animation: "loveTransFade 5.5s ease forwards",
+      animation: "loveTransFade 8s ease forwards",
       overflow: "hidden", pointerEvents: "none",
     }}>
       <div aria-hidden="true" style={{
