@@ -5,13 +5,9 @@ import { normalise } from "../lib/utils.js";
 function LockHeart({ style }) {
   return (
     <div aria-hidden="true" style={{
-      position: "absolute",
-      pointerEvents: "none",
-      fontSize: style.size,
-      color: style.color,
-      left: style.left,
-      top: style.top,
-      opacity: 0,
+      position: "absolute", pointerEvents: "none",
+      fontSize: style.size, color: style.color,
+      left: style.left, top: style.top, opacity: 0,
       animation: `lockHeartFloat ${style.dur}s ease-in-out ${style.delay}s infinite`,
     }}>
       {style.glyph}
@@ -29,10 +25,8 @@ function OrbitRing({ radius, count, speed, size, color }) {
     }}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} style={{
-          position: "absolute",
-          width: size, height: size,
-          borderRadius: "50%",
-          background: color,
+          position: "absolute", width: size, height: size,
+          borderRadius: "50%", background: color,
           left: "50%", top: "50%",
           marginLeft: -size / 2, marginTop: -size / 2,
           transform: `rotate(${(i / count) * 360}deg) translateY(-${radius}px)`,
@@ -60,6 +54,63 @@ function PulseRings() {
   );
 }
 
+/* Explosion hearts that fire outward on unlock */
+function UnlockExplosion({ active }) {
+  if (!active) return null;
+  const pieces = Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    angle: (i / 40) * 360,
+    dist: 120 + Math.random() * 200,
+    size: 14 + Math.random() * 28,
+    dur: 0.8 + Math.random() * 0.8,
+    delay: Math.random() * 0.3,
+    glyph: ["♥","♡","❤","✦","✿","★"][Math.floor(Math.random() * 6)],
+    color: ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE","#fff"][Math.floor(Math.random() * 5)],
+  }));
+  return (
+    <div aria-hidden="true" style={{
+      position: "fixed", inset: 0, zIndex: 200,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      pointerEvents: "none",
+    }}>
+      {pieces.map((p) => (
+        <div key={p.id} style={{
+          position: "absolute",
+          fontSize: p.size,
+          color: p.color,
+          animation: `unlockBurst ${p.dur}s ease-out ${p.delay}s forwards`,
+          "--bx": `${Math.cos((p.angle * Math.PI) / 180) * p.dist}px`,
+          "--by": `${Math.sin((p.angle * Math.PI) / 180) * p.dist}px`,
+          opacity: 0,
+          textShadow: `0 0 12px ${p.color}`,
+        }}>
+          {p.glyph}
+        </div>
+      ))}
+      {/* Big centre flash */}
+      <div style={{
+        position: "absolute",
+        width: "100vw", height: "100vh",
+        background: "radial-gradient(ellipse at center, rgba(240,143,168,0.35) 0%, transparent 65%)",
+        animation: "unlockFlash 1.2s ease-out forwards",
+      }} />
+      {/* "I love you" text that appears in centre */}
+      <div style={{
+        position: "absolute",
+        fontFamily: "Parisienne, cursive",
+        fontSize: "clamp(2.5rem, 8vw, 5rem)",
+        color: "#F08FA8",
+        textShadow: "0 0 40px rgba(240,143,168,0.9), 0 0 80px rgba(240,143,168,0.5)",
+        animation: "unlockMessage 1.8s ease forwards",
+        textAlign: "center",
+        zIndex: 5,
+      }}>
+        ♥
+      </div>
+    </div>
+  );
+}
+
 const BG_HEARTS = Array.from({ length: 18 }, () => ({
   size: `${0.9 + Math.random() * 1.4}rem`,
   color: ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE"][Math.floor(Math.random() * 4)],
@@ -75,6 +126,7 @@ export default function Lock({ onUnlock }) {
   const [wrong, setWrong] = useState(0);
   const [shake, setShake] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [exploding, setExploding] = useState(false);
   const [gone, setGone] = useState(false);
   const [phase, setPhase] = useState(0);
   const [hint, setHint] = useState(false);
@@ -95,9 +147,14 @@ export default function Lock({ onUnlock }) {
     e.preventDefault();
     if (!value.trim()) return;
     if (normalise(value) === normalise(LOCK.password)) {
-      setLeaving(true);
-      onUnlock();
-      setTimeout(() => setGone(true), 1400);
+      // Step 1: heart explodes
+      setExploding(true);
+      // Step 2: after explosion, screen starts dissolving
+      setTimeout(() => setLeaving(true), 600);
+      // Step 3: tell parent to show content
+      setTimeout(() => onUnlock(), 800);
+      // Step 4: remove lock entirely
+      setTimeout(() => setGone(true), 2200);
     } else {
       setWrong((w) => w + 1);
       setShake(true);
@@ -113,158 +170,174 @@ export default function Lock({ onUnlock }) {
     : LOCK.wrongMessages[Math.min(wrong - 1, LOCK.wrongMessages.length - 1)];
 
   return (
-    <div
-      className={`lock ${leaving ? "leaving" : ""}`}
-      style={{ background: "var(--night)", overflow: "hidden" }}
-    >
-      {BG_HEARTS.map((h, i) => <LockHeart key={i} style={h} />)}
+    <>
+      {/* Explosion layer — above everything */}
+      <UnlockExplosion active={exploding} />
 
-      <div aria-hidden="true" style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse 60% 55% at 20% 40%, rgba(74,42,107,0.5), transparent)",
-        animation: "drift1 18s ease-in-out infinite",
-      }} />
-      <div aria-hidden="true" style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse 50% 50% at 80% 60%, rgba(142,61,99,0.45), transparent)",
-        animation: "drift2 22s ease-in-out infinite",
-      }} />
+      <div
+        className={`lock ${leaving ? "leaving" : ""}`}
+        style={{
+          background: "var(--night)",
+          overflow: "hidden",
+          transition: leaving
+            ? "opacity 1.6s ease 0.3s, transform 1.6s cubic-bezier(.2,.8,.3,1) 0.3s, filter 1.6s ease 0.3s"
+            : "opacity 1.4s ease, filter 1.4s ease, transform 1.4s ease",
+        }}
+      >
+        {BG_HEARTS.map((h, i) => <LockHeart key={i} style={h} />)}
 
-      <div style={{
-        position: "relative", zIndex: 10,
-        width: "100%", maxWidth: 460,
-        padding: "0 28px",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        opacity: phase === 1 ? 1 : 0,
-        transform: phase === 1 ? "none" : "translateY(30px)",
-        transition: "opacity 1.2s ease, transform 1.2s ease",
-      }}>
-
-        {/* Animated heart centrepiece */}
-        <div style={{ position: "relative", marginBottom: 32, width: 110, height: 110 }}>
-          <PulseRings />
-          <OrbitRing radius={48} count={6} speed={8} size={5} color="#F08FA8" />
-          <OrbitRing radius={36} count={4} speed={14} size={3} color="#F4C77B" />
-          <div style={{
-            position: "absolute", left: "50%", top: "50%",
-            transform: "translate(-50%, -50%)",
-            fontFamily: "Parisienne, cursive",
-            fontSize: "3.2rem", color: "#F08FA8",
-            animation: "lockHeartBeat 1.8s ease-in-out infinite",
-            textShadow: "0 0 30px rgba(240,143,168,0.8), 0 0 60px rgba(240,143,168,0.4)",
-            lineHeight: 1,
-          }}>♥</div>
-        </div>
-
-        <p className="eyebrow mb-4" style={{ animation: "lockFadeUp 0.8s ease 0.8s both", textAlign: "center" }}>
-          Something I made just for you
-        </p>
-
-        <h1 className="display text-center mb-3" style={{
-          fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
-          animation: "lockFadeUp 0.8s ease 1s both",
-        }}>
-          Hello,{" "}
-          <span className="script rose" style={{ fontSize: "1.2em" }}>{HER_NAME}</span>
-        </h1>
-
-        <p className="soft text-sm leading-relaxed text-center mb-8" style={{
-          maxWidth: 340,
-          animation: "lockFadeUp 0.8s ease 1.2s both",
-        }}>
-          I built you an entire world and locked it,
-          because it belongs to you and nobody else.
-          The answer is already in your heart.
-        </p>
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 55% at 20% 40%, rgba(74,42,107,0.5), transparent)",
+          animation: "drift1 18s ease-in-out infinite",
+        }} />
+        <div aria-hidden="true" style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 50% 50% at 80% 60%, rgba(142,61,99,0.45), transparent)",
+          animation: "drift2 22s ease-in-out infinite",
+        }} />
 
         <div style={{
-          display: "flex", alignItems: "center", gap: 14, marginBottom: 24, width: "100%",
-          animation: "lockFadeUp 0.8s ease 1.35s both",
+          position: "relative", zIndex: 10,
+          width: "100%", maxWidth: 460,
+          padding: "0 28px",
+          display: "flex", flexDirection: "column", alignItems: "center",
+          opacity: phase === 1 ? 1 : 0,
+          transform: phase === 1 ? "none" : "translateY(30px)",
+          transition: "opacity 1.2s ease, transform 1.2s ease",
         }}>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(244,199,123,0.4))" }} />
-          <span style={{ color: "var(--gold)", fontSize: "0.7rem" }}>✦</span>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(244,199,123,0.4), transparent)" }} />
-        </div>
 
-        <p style={{
-          fontFamily: "Cormorant Garamond, serif",
-          fontSize: "1.15rem", color: "var(--gold)",
-          textAlign: "center", marginBottom: 20, fontStyle: "italic",
-          animation: "lockFadeUp 0.8s ease 1.5s both",
-        }}>
-          {LOCK.question}
-        </p>
-
-        <form onSubmit={submit} className={shake ? "shake" : ""} style={{
-          width: "100%",
-          animation: "lockFadeUp 0.8s ease 1.65s both",
-        }}>
-          <div style={{
-            position: "relative",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(244,199,123,0.3)",
-            borderRadius: 8, overflow: "hidden",
-            transition: "border-color 0.35s, box-shadow 0.35s",
-          }}>
-            <input
-              ref={input}
-              className="key-in"
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              spellCheck="false"
-              placeholder={LOCK.hint}
-              aria-label={LOCK.question}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              style={{
-                width: "100%", border: "none", borderBottom: "none",
-                borderRadius: 8, padding: "16px 20px", background: "transparent",
-              }}
-            />
+          {/* Animated heart centrepiece */}
+          <div style={{ position: "relative", marginBottom: 32, width: 110, height: 110 }}>
+            <PulseRings />
+            <OrbitRing radius={48} count={6} speed={8} size={5} color="#F08FA8" />
+            <OrbitRing radius={36} count={4} speed={14} size={3} color="#F4C77B" />
+            <div style={{
+              position: "absolute", left: "50%", top: "50%",
+              transform: "translate(-50%, -50%)",
+              fontFamily: "Parisienne, cursive",
+              fontSize: exploding ? "6rem" : "3.2rem",
+              color: "#F08FA8",
+              animation: exploding
+                ? "lockHeartExplode 0.6s cubic-bezier(.2,.8,.3,1) forwards"
+                : "lockHeartBeat 1.8s ease-in-out infinite",
+              textShadow: "0 0 30px rgba(240,143,168,0.8), 0 0 60px rgba(240,143,168,0.4)",
+              lineHeight: 1,
+              transition: "font-size 0.3s ease",
+            }}>♥</div>
           </div>
 
-          <button
-            type="submit"
-            style={{
-              marginTop: 16, width: "100%", padding: "16px 0",
-              background: "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))",
-              border: "1px solid rgba(240,143,168,0.45)",
-              borderRadius: 8, color: "var(--cream)",
-              fontFamily: "Jost, sans-serif", fontSize: "0.72rem",
-              letterSpacing: "0.36em", textTransform: "uppercase",
-              cursor: "pointer", transition: "all 0.35s", backdropFilter: "blur(8px)",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "linear-gradient(135deg, rgba(240,143,168,0.35), rgba(195,166,240,0.25))";
-              e.target.style.boxShadow = "0 0 30px rgba(240,143,168,0.3)";
-              e.target.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))";
-              e.target.style.boxShadow = "none";
-              e.target.style.transform = "none";
-            }}
-          >
-            Open it for me ♥
-          </button>
-        </form>
+          <p className="eyebrow mb-4" style={{
+            animation: "lockFadeUp 0.8s ease 0.8s both", textAlign: "center",
+          }}>
+            Something I made just for you
+          </p>
 
-        <p className="script rose mt-6" style={{
-          fontSize: "1.25rem", minHeight: 32, textAlign: "center",
-          opacity: message ? 1 : 0, transition: "opacity 0.4s",
-        }}>
-          {message || "\u00A0"}
-        </p>
+          <h1 className="display text-center mb-3" style={{
+            fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
+            animation: "lockFadeUp 0.8s ease 1s both",
+          }}>
+            Hello,{" "}
+            <span className="script rose" style={{ fontSize: "1.2em" }}>{HER_NAME}</span>
+          </h1>
 
-        <p style={{
-          fontSize: "0.65rem", letterSpacing: "0.28em", textTransform: "uppercase",
-          color: "rgba(195,166,240,0.45)", marginTop: 28, textAlign: "center",
-          opacity: hint ? 1 : 0, transition: "opacity 1.5s ease",
-        }}>
-          {LOCK.hint} &nbsp;·&nbsp; the day that changed everything
-        </p>
+          <p className="soft text-sm leading-relaxed text-center mb-8" style={{
+            maxWidth: 340,
+            animation: "lockFadeUp 0.8s ease 1.2s both",
+          }}>
+            I built you an entire world and locked it,
+            because it belongs to you and nobody else.
+            The answer is already in your heart.
+          </p>
+
+          <div style={{
+            display: "flex", alignItems: "center", gap: 14, marginBottom: 24, width: "100%",
+            animation: "lockFadeUp 0.8s ease 1.35s both",
+          }}>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, transparent, rgba(244,199,123,0.4))" }} />
+            <span style={{ color: "var(--gold)", fontSize: "0.7rem" }}>✦</span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(244,199,123,0.4), transparent)" }} />
+          </div>
+
+          <p style={{
+            fontFamily: "Cormorant Garamond, serif",
+            fontSize: "1.15rem", color: "var(--gold)",
+            textAlign: "center", marginBottom: 20, fontStyle: "italic",
+            animation: "lockFadeUp 0.8s ease 1.5s both",
+          }}>
+            {LOCK.question}
+          </p>
+
+          <form onSubmit={submit} className={shake ? "shake" : ""} style={{
+            width: "100%",
+            animation: "lockFadeUp 0.8s ease 1.65s both",
+          }}>
+            <div style={{
+              position: "relative",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(244,199,123,0.3)",
+              borderRadius: 8, overflow: "hidden",
+            }}>
+              <input
+                ref={input}
+                className="key-in"
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                spellCheck="false"
+                placeholder={LOCK.hint}
+                aria-label={LOCK.question}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                style={{
+                  width: "100%", border: "none", borderBottom: "none",
+                  borderRadius: 8, padding: "16px 20px", background: "transparent",
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              style={{
+                marginTop: 16, width: "100%", padding: "16px 0",
+                background: "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))",
+                border: "1px solid rgba(240,143,168,0.45)",
+                borderRadius: 8, color: "var(--cream)",
+                fontFamily: "Jost, sans-serif", fontSize: "0.72rem",
+                letterSpacing: "0.36em", textTransform: "uppercase",
+                cursor: "pointer", transition: "all 0.35s", backdropFilter: "blur(8px)",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "linear-gradient(135deg, rgba(240,143,168,0.35), rgba(195,166,240,0.25))";
+                e.target.style.boxShadow = "0 0 30px rgba(240,143,168,0.3)";
+                e.target.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "linear-gradient(135deg, rgba(240,143,168,0.18), rgba(195,166,240,0.12))";
+                e.target.style.boxShadow = "none";
+                e.target.style.transform = "none";
+              }}
+            >
+              Open it for me ♥
+            </button>
+          </form>
+
+          <p className="script rose mt-6" style={{
+            fontSize: "1.25rem", minHeight: 32, textAlign: "center",
+            opacity: message ? 1 : 0, transition: "opacity 0.4s",
+          }}>
+            {message || "\u00A0"}
+          </p>
+
+          <p style={{
+            fontSize: "0.65rem", letterSpacing: "0.28em", textTransform: "uppercase",
+            color: "rgba(195,166,240,0.45)", marginTop: 28, textAlign: "center",
+            opacity: hint ? 1 : 0, transition: "opacity 1.5s ease",
+          }}>
+            {LOCK.hint} &nbsp;·&nbsp; the day that changed everything
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
