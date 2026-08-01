@@ -187,7 +187,7 @@ export const CHAT = [
 
 export const PHOTOS = [
   { src: "/photos/first day.jpeg", tilt: -4 },
-  { src: "/photos/mid laugh.jpeg", tilt:  3 },
+  { src: "/photos/vsdvsd.jpeg", tilt:  3 },
   { src: "/photos/first date.jpeg", tilt: -2 },
   { src: "/photos/class.jpeg", tilt:  5 },
   { src: "/photos/class 2.jpeg", tilt: -5 },
