@@ -84,7 +84,6 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
         borderRadius: 3,
         padding    : "10px 10px 40px",
         width      : "100%",
-        animation  : `polaReveal 0.6s cubic-bezier(.2,.8,.3,1) ${index * 80}ms both`,
       }}
     >
       {/* photo area */}
@@ -180,6 +179,7 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
         }}>♥</div>
       ))}
     </figure>
+    </div>
   );
 }
 
