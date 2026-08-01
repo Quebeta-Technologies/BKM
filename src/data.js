@@ -30,7 +30,7 @@ export const LOCK = {
 /* If there's no file, the music button just quietly disappears.            */
 
 export const SONG = {
-  file: "/song.mp3",
+  file: "/audio/Finding Her.mp3",
   title: "our song",
   volume: 0.32, // 0 to 1
   autoplay: true, // starts the moment she unlocks the page
