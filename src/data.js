@@ -157,7 +157,7 @@ export const REASONS = [
   "The way you laugh a half-second before the funny part.",
   'How you say "one minute" and mean twenty, and I never mind.',
   "That you check on people who never check on you.",
-  "Your voice notes. All of them. Even the four-minute ones.",
+  "Your voice notes. All of them",
   "How you get genuinely excited about very small things.",
   "That you remember what I told you once, months ago, offhand.",
   "The face you make when you're concentrating.",

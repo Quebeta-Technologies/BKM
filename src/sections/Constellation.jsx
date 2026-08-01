@@ -308,13 +308,31 @@ export default function Constellation() {
   const [selected, setSelected] = useState(MILESTONES[0].id);
   const [sparked, setSparked]   = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+  const [isMobileSVG, setIsMobileSVG] = useState(() => window.innerWidth < 640);
   const pathRef = useRef(null);
   const [pathLen, setPathLen] = useState(0);
+
+  useEffect(() => {
+    const fn = () => setIsMobileSVG(window.innerWidth < 640);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  // Mobile star positions — vertical layout so each star is clearly visible
+  const MOBILE_MILESTONES = MILESTONES.map((m, i) => ({
+    ...m,
+    x: i % 2 === 0 ? 160 : 340,
+    y: 80 + i * 130,
+  }));
+
+  const displayMilestones = isMobileSVG ? MOBILE_MILESTONES : MILESTONES;
+  const mobileViewH = 80 + MILESTONES.length * 130 + 60;
 
   const index  = MILESTONES.findIndex((m) => m.id === selected);
   const active = MILESTONES[index];
   const gap    = index > 0 ? daysBetween(MILESTONES[index - 1].date, active.date) : null;
   const last   = MILESTONES[MILESTONES.length - 1];
+  const lastDisplay = displayMilestones[displayMilestones.length - 1];
 
   // measure path length for draw-on animation
   useEffect(() => {
@@ -327,7 +345,7 @@ export default function Constellation() {
     setTimeout(() => setSparked(null), 1100);
   };
 
-  const pathD = buildPath(MILESTONES);
+  const pathD = buildPath(displayMilestones);
 
   return (
     <section style={{ padding:"3rem 1rem 3rem", maxWidth:940, margin:"0 auto" }}>
@@ -396,7 +414,7 @@ export default function Constellation() {
         }}
       >
         <svg
-          viewBox="0 0 800 420"
+          viewBox={isMobileSVG ? ("0 0 500 " + mobileViewH) : "0 0 800 420"}
           className="w-full"
           role="group"
           aria-label="Constellation of our milestone dates"
@@ -461,22 +479,22 @@ export default function Constellation() {
 
           {/* tail beyond last star */}
           <path
-            d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
+            d={`M ${lastDisplay.x} ${lastDisplay.y} C ${lastDisplay.x+30} ${lastDisplay.y+28}, ${lastDisplay.x+55} ${lastDisplay.y+53}, ${lastDisplay.x+72} ${lastDisplay.y+78}`}
             fill="none" stroke="#C3A6F0" strokeOpacity=".3"
             strokeWidth="1" strokeDasharray="3 7"
             style={{ animation:"tailPulse 3s ease-in-out infinite" }}
           />
-          <circle cx={last.x+76} cy={last.y+86} r="3.5" fill="#C3A6F0"
+          <circle cx={lastDisplay.x+76} cy={lastDisplay.y+86} r="3.5" fill="#C3A6F0"
             style={{ animation:"tailPulse 2s ease-in-out infinite" }}
           />
-          <text x={last.x+76} y={last.y+112}
+          <text x={lastDisplay.x+76} y={lastDisplay.y+112}
             textAnchor="middle" className="star-lab" opacity=".45"
             style={{ fontStyle:"italic" }}>
             and everything after
           </text>
 
           {/* milestone stars */}
-          {MILESTONES.map((m, mi) => {
+          {displayMilestones.map((m, mi) => {
             const isSel  = m.id === selected;
             const isHov  = m.id === hoveredId;
             const above  = m.y < 200;
@@ -561,14 +579,16 @@ export default function Constellation() {
                 {/* label + date */}
                 <text x={m.x} y={above ? m.y - 34 : m.y + 44}
                   textAnchor="middle" className="star-lab"
-                  opacity={isSel || isHov ? 1 : 0.55}
+                  opacity={isSel || isHov ? 1 : 0.65}
+                  fontSize={isMobileSVG ? 13 : 11}
                   style={{ transition:"opacity 0.2s", fontWeight: isSel ? 600 : 400 }}
                 >
                   {m.label}
                 </text>
                 <text x={m.x} y={above ? m.y - 19 : m.y + 29}
                   textAnchor="middle" className="star-date"
-                  opacity={isSel || isHov ? 0.9 : 0.44}
+                  opacity={isSel || isHov ? 0.9 : 0.55}
+                  fontSize={isMobileSVG ? 16 : 15}
                   style={{ transition:"opacity 0.2s" }}
                 >
                   {shortDate(m.date)}
