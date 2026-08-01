@@ -70,44 +70,50 @@ function LoveTransition({ active, onDone }) {
     const cx = W / 2;
     const cy = H / 2;
 
-    /* ── sample text pixels ── */
-    const sampleText = (text, fontSize, yOffset) => {
+    /* ── Fixed 800px sampling canvas — works on all screen sizes ── */
+    const sampleText = (text, fontSize, yCenter) => {
+      const SW = 800, SH = 300;
       const off = document.createElement("canvas");
-      off.width = W; off.height = 220;
+      off.width = SW; off.height = SH;
       const c = off.getContext("2d");
-      c.clearRect(0, 0, W, 220);
+      c.clearRect(0, 0, SW, SH);
       c.fillStyle = "#fff";
       c.font = `bold ${fontSize}px Georgia, serif`;
       c.textAlign = "center";
       c.textBaseline = "middle";
-      c.fillText(text, W / 2, 110);
-      const data = c.getImageData(0, 0, W, 220).data;
+      c.fillText(text, SW / 2, SH / 2);
+      const data = c.getImageData(0, 0, SW, SH).data;
       const pts = [];
-      const step = Math.max(2, Math.floor(W / 200));
-      for (let y = 0; y < 220; y += step)
-        for (let x = 0; x < W; x += step)
-          if (data[(y * W + x) * 4 + 3] > 100)
-            pts.push({ x, y: y + yOffset });
+      const step = 4;
+      for (let y = 0; y < SH; y += step)
+        for (let x = 0; x < SW; x += step)
+          if (data[(y * SW + x) * 4 + 3] > 100) {
+            /* scale from 800x300 space to actual screen */
+            const screenX = (x / SW) * W;
+            const screenY = yCenter + (y - SH / 2) * (W / SW);
+            pts.push({ x: screenX, y: screenY });
+          }
       return pts;
     };
 
-    const fs1 = Math.min(W * 0.13, 110);
-    const fs2 = Math.min(W * 0.19, 150);
-    const line1Y = cy - fs1 * 0.8;
-    const line2Y = cy + fs2 * 0.55;
+    const lineGap = Math.min(H * 0.14, 100);
+    const line1Y  = cy - lineGap * 0.6;
+    const line2Y  = cy + lineGap * 0.9;
 
-    const pts1 = sampleText("I love you", fs1, line1Y - 110);
-    const pts2 = sampleText("Rimi", fs2, line2Y - 110);
+    const pts1 = sampleText("I love you", 160, line1Y);
+    const pts2 = sampleText("Rimi",       220, line2Y);
     const allPts = [...pts1, ...pts2];
 
-    if (allPts.length === 0) { cancelAnimationFrame(animRef.current); return; }
+    if (allPts.length === 0) {
+      cancelAnimationFrame(animRef.current);
+      return;
+    }
 
     const COLORS = [
       "#F08FA8","#F08FA8","#FBD5DE","#F4C77B",
       "#C3A6F0","#fff","#FFB3C6","#FF85A1",
     ];
 
-    /* draw a petal shape */
     const drawPetal = (ctx, x, y, size, rot, color, alpha, shape) => {
       ctx.save();
       ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
@@ -145,7 +151,7 @@ function LoveTransition({ active, onDone }) {
         ctx.fill();
 
       } else if (shape === 2) {
-        /* star/sparkle */
+        /* sparkle star */
         ctx.fillStyle = color;
         ctx.shadowColor = color;
         ctx.shadowBlur = size * 1.5;
@@ -154,14 +160,15 @@ function LoveTransition({ active, onDone }) {
         for (let i = 0; i < spikes * 2; i++) {
           const r = i % 2 === 0 ? size * 0.55 : size * 0.22;
           const a = (i * Math.PI) / spikes;
-          i === 0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r)
-                  : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+          i === 0
+            ? ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r)
+            : ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
         }
         ctx.closePath();
         ctx.fill();
 
       } else {
-        /* simple glowing circle */
+        /* glowing circle */
         ctx.beginPath();
         ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
         ctx.fillStyle = color;
@@ -173,34 +180,29 @@ function LoveTransition({ active, onDone }) {
       ctx.restore();
     };
 
-    /* build particles */
     const particles = allPts.map((pt, i) => {
       const angle = Math.random() * Math.PI * 2;
       const dist  = Math.min(W, H) * (0.4 + Math.random() * 0.6);
       const color = COLORS[i % COLORS.length];
-      const shape = i % 4; /* cycle through shapes */
+      const shape = i % 4;
       return {
         sx: cx + Math.cos(angle) * dist,
         sy: cy + Math.sin(angle) * dist,
         tx: pt.x, ty: pt.y,
         ex: cx + Math.cos(angle) * dist * 3,
         ey: cy + Math.sin(angle) * dist * 3,
-        x: cx + Math.cos(angle) * dist,
-        y: cy + Math.sin(angle) * dist,
         color, shape,
         size: 9 + Math.random() * 8,
         rot: Math.random() * Math.PI * 2,
         rotSpd: (Math.random() - 0.5) * 0.08,
         alpha: 0,
-        swirl: Math.random() * Math.PI * 2,
       };
     });
 
     const GATHER = 160, HOLD = 130, EXPLODE = 80;
-    const TOTAL = GATHER + HOLD + EXPLODE;
+    const TOTAL  = GATHER + HOLD + EXPLODE;
     let t = 0;
 
-    const easeOut   = x => 1 - Math.pow(1 - x, 3);
     const easeIn    = x => x * x * x;
     const easeInOut = x => x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2;
 
@@ -210,9 +212,9 @@ function LoveTransition({ active, onDone }) {
       t++;
 
       let ph, lt;
-      if      (t <= GATHER)              { ph = "gather";  lt = t / GATHER; }
-      else if (t <= GATHER + HOLD)       { ph = "hold";    lt = (t - GATHER) / HOLD; }
-      else if (t <= TOTAL)               { ph = "explode"; lt = (t - GATHER - HOLD) / EXPLODE; }
+      if      (t <= GATHER)          { ph = "gather";  lt = t / GATHER; }
+      else if (t <= GATHER+HOLD)     { ph = "hold";    lt = (t-GATHER) / HOLD; }
+      else if (t <= TOTAL)           { ph = "explode"; lt = (t-GATHER-HOLD) / EXPLODE; }
       else {
         cancelAnimationFrame(animRef.current);
         return;
@@ -236,7 +238,6 @@ function LoveTransition({ active, onDone }) {
           py    = p.ty + Math.cos(t * 0.07 + i * 0.2) * 1.2;
           alpha = 0.88 + Math.sin(t * 0.1 + i * 0.18) * 0.12;
           sz    = p.size * (1 + Math.sin(t * 0.065 + i * 0.12) * 0.1);
-          /* slow rotation during hold */
           p.rotSpd = Math.sin(t * 0.02 + i) * 0.03;
 
         } else {
@@ -277,7 +278,7 @@ function LoveTransition({ active, onDone }) {
         maxWidth: 600, maxHeight: 400,
         borderRadius: "50%",
         background: "radial-gradient(ellipse, rgba(240,143,168,0.2), transparent 70%)",
-        animation: "loveTransGlow 5.5s ease forwards",
+        animation: "loveTransGlow 8s ease forwards",
       }} />
       <canvas ref={canvasRef} style={{
         position: "absolute", inset: 0,
@@ -286,6 +287,7 @@ function LoveTransition({ active, onDone }) {
     </div>
   );
 }
+
 const BG_HEARTS = Array.from({ length: 18 }, () => ({
   size:  `${0.9 + Math.random() * 1.4}rem`,
   color: ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE"][Math.floor(Math.random() * 4)],
