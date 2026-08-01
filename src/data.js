@@ -53,6 +53,7 @@ export const MILESTONES = [
     y: 300,
     emoji: "💬",
     photos: [
+      "/photos/x.jpeg"
       // "/photos/hello-1.jpg",  ← add your photos here
     ],
     text:
