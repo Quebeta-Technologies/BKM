@@ -262,13 +262,18 @@ function SignOff({ since }) {
       {/* built-by footer */}
       <p style={{
         marginTop    : 24,
-        fontSize     : "0.55rem",
-        letterSpacing: "0.32em",
+        fontSize     : "0.65rem",
+        letterSpacing: "0.28em",
         textTransform: "uppercase",
-        color        : "rgba(255,255,255,0.28)",
+        color        : "rgba(220,210,240,0.75)",
         fontFamily   : "Jost, sans-serif",
+        textShadow   : "0 0 10px rgba(255,255,255,0.1)",
       }}>
-        built by hand &nbsp;·&nbsp; one message at a time &nbsp;·&nbsp; since {since}
+        built by hand
+        <span style={{ color:"var(--gold)", opacity:0.9, margin:"0 12px" }}>·</span>
+        one message at a time
+        <span style={{ color:"var(--gold)", opacity:0.9, margin:"0 12px" }}>·</span>
+        since {since}
       </p>
     </div>
   );
@@ -444,6 +449,7 @@ export default function Finale({ burst }) {
         </div>
 
         {/* ── press button ── */}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
         <PressButton presses={presses} onClick={press}/>
 
         {/* ── "she said yes N times" badge ── */}
@@ -466,6 +472,7 @@ export default function Finale({ burst }) {
             </span>
           </div>
         )}
+        </div>
 
         {/* ── button response line ── */}
         <div style={{ minHeight:56, marginTop:4, display:"flex",
