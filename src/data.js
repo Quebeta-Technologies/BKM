@@ -7,7 +7,7 @@
 /* ── 1. WHO ──────────────────────────────────────────────────────────────── */
 
 export const HER_NAME = "Rimi"; // her name, or your nickname for her
-export const YOUR_SIGNOFF = "Yours, always"; // how you sign your letters
+export const YOUR_SIGNOFF = "Yours, Biki"; // how you sign your letters
 
 /* ── 2. THE LOCK ─────────────────────────────────────────────────────────── */
 /* Only she should be able to open this. Pick something only she'd know.     */
@@ -15,7 +15,7 @@ export const YOUR_SIGNOFF = "Yours, always"; // how you sign your letters
 export const LOCK = {
   enabled: true, // set to false to remove the password screen entirely
   password: "10082025", // the answer (spaces, slashes and case are ignored)
-  question: "The day you first said hi to me.",
+  question: "The day i first said hi to me you.",
   hint: "ddmmyyyy",
   wrongMessages: [
     "That's not it. Think about August.",

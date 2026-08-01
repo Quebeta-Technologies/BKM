@@ -74,7 +74,6 @@ export default function Constellation() {
         </p>
       </Reveal>
 
-      {/* wrapper div — NO overflow hidden, just position relative */}
       <div
         ref={ref}
         className={`cons ${on ? "on" : ""}`}
@@ -94,115 +93,107 @@ export default function Constellation() {
               <stop offset="100%" stopColor="#C3A6F0" stopOpacity=".5" />
             </linearGradient>
 
-            {/* ── KEY FIX: filters scoped tightly, no huge expansion ── */}
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="b" />
+            {/* Only one tight glow filter — no glow2 at all */}
+            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="3" result="b" />
               <feMerge>
                 <feMergeNode in="b" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <filter id="glow2" x="-60%" y="-60%" width="220%" height="220%">
-              <feGaussianBlur stdDeviation="7" result="b" />
-              <feMerge>
-                <feMergeNode in="b" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Clip so nothing draws outside the viewBox boundary */}
-            <clipPath id="svgClip">
-              <rect x="-100" y="-60" width="1000" height="560" />
-            </clipPath>
           </defs>
 
-          <g clipPath="url(#svgClip)">
-            <path d={buildPath(MILESTONES)} className="cons-line" />
+          <path d={buildPath(MILESTONES)} className="cons-line" />
 
-            {/* trailing dotted line beyond last star */}
-            <path
-              d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
-              fill="none" stroke="#C3A6F0" strokeOpacity=".35"
-              strokeWidth="1" strokeDasharray="3 7"
-            />
-            <circle cx={last.x+76} cy={last.y+86} r="3" fill="#C3A6F0" className="pulse" />
-            <text x={last.x+76} y={last.y+110}
-              textAnchor="middle" className="star-lab" opacity=".55">
-              and everything after
-            </text>
+          <path
+            d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
+            fill="none" stroke="#C3A6F0" strokeOpacity=".35"
+            strokeWidth="1" strokeDasharray="3 7"
+          />
+          <circle cx={last.x+76} cy={last.y+86} r="3" fill="#C3A6F0" className="pulse" />
+          <text x={last.x+76} y={last.y+110}
+            textAnchor="middle" className="star-lab" opacity=".55">
+            and everything after
+          </text>
 
-            {MILESTONES.map((m) => {
-              const isSel = m.id === selected;
-              const above = m.y < 200;
-              return (
-                <g
-                  key={m.id}
-                  className="star-hit"
-                  tabIndex={0}
-                  role="button"
-                  aria-pressed={isSel}
-                  aria-label={`${m.label}, ${fmtDate(m.date)}`}
-                  onClick={() => select(m.id)}
-                  onKeyDown={(e) =>
-                    (e.key === "Enter" || e.key === " ") &&
-                    (e.preventDefault(), select(m.id))
-                  }
+          {MILESTONES.map((m) => {
+            const isSel = m.id === selected;
+            const above = m.y < 200;
+            return (
+              <g
+                key={m.id}
+                className="star-hit"
+                tabIndex={0}
+                role="button"
+                aria-pressed={isSel}
+                aria-label={`${m.label}, ${fmtDate(m.date)}`}
+                onClick={() => select(m.id)}
+                onKeyDown={(e) =>
+                  (e.key === "Enter" || e.key === " ") &&
+                  (e.preventDefault(), select(m.id))
+                }
+              >
+                {/* hit area */}
+                <circle cx={m.x} cy={m.y} r="38" fill="transparent" />
+
+                {/* pulse ring — only on selected */}
+                {isSel && (
+                  <circle
+                    cx={m.x} cy={m.y} r="16"
+                    fill="none"
+                    stroke="#F08FA8"
+                    strokeOpacity=".5"
+                    strokeWidth="1"
+                    style={{ animation: "starPulseRing 1.8s ease-out infinite" }}
+                  />
+                )}
+
+                {/* halo */}
+                <circle
+                  cx={m.x} cy={m.y}
+                  r={isSel ? 14 : 10}
+                  fill={isSel ? "#F08FA8" : "#F4C77B"}
+                  opacity={isSel ? 0.22 : 0.08}
+                />
+
+                {/* glow layers — manual circles instead of SVG filter */}
+                {isSel ? (
+                  <>
+                    <circle cx={m.x} cy={m.y} r="16" fill="#F08FA8" opacity="0.07" />
+                    <circle cx={m.x} cy={m.y} r="12" fill="#F08FA8" opacity="0.10" />
+                    <circle cx={m.x} cy={m.y} r="8"  fill="#FFB8CC" opacity="0.22" />
+                    <circle cx={m.x} cy={m.y} r="8"  fill="#FFE9EF" opacity="1" />
+                  </>
+                ) : (
+                  <circle
+                    cx={m.x} cy={m.y}
+                    r="4.5"
+                    fill="#F4C77B"
+                    filter="url(#glow)"
+                  />
+                )}
+
+                <Sparkles x={m.x} y={m.y} active={sparked === m.id} />
+
+                <text
+                  x={m.x} y={above ? m.y - 32 : m.y + 42}
+                  textAnchor="middle"
+                  className="star-lab"
+                  opacity={isSel ? 1 : 0.58}
                 >
-                  {/* big transparent hit area */}
-                  <circle cx={m.x} cy={m.y} r="38" fill="transparent" />
-
-                  {/* selected pulse ring — small radius so it stays inside */}
-                  {isSel && (
-                    <circle
-                      cx={m.x} cy={m.y} r="18"
-                      fill="none"
-                      stroke="#F08FA8"
-                      strokeOpacity=".55"
-                      strokeWidth="1"
-                      style={{ animation: "starPulseRing 1.8s ease-out infinite" }}
-                    />
-                  )}
-
-                  {/* halo */}
-                  <circle
-                    className="star-halo"
-                    cx={m.x} cy={m.y}
-                    r={isSel ? 16 : 10}
-                    fill={isSel ? "#F08FA8" : "#F4C77B"}
-                    opacity={isSel ? 0.25 : 0.08}
-                  />
-
-                  {/* core */}
-                  <circle
-                    className="star-core"
-                    cx={m.x} cy={m.y}
-                    r={isSel ? 8 : 4.5}
-                    fill={isSel ? "#FFE9EF" : "#F4C77B"}
-                    filter={isSel ? "url(#glow2)" : "url(#glow)"}
-                  />
-
-                  <Sparkles x={m.x} y={m.y} active={sparked === m.id} />
-
-                  <text
-                    x={m.x} y={above ? m.y - 32 : m.y + 42}
-                    textAnchor="middle"
-                    className="star-lab"
-                    opacity={isSel ? 1 : 0.58}
-                  >
-                    {m.label}
-                  </text>
-                  <text
-                    x={m.x} y={above ? m.y - 16 : m.y + 27}
-                    textAnchor="middle"
-                    className="star-date"
-                    opacity={isSel ? 1 : 0.48}
-                  >
-                    {shortDate(m.date)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
+                  {m.label}
+                </text>
+                <text
+                  x={m.x} y={above ? m.y - 16 : m.y + 27}
+                  textAnchor="middle"
+                  className="star-date"
+                  opacity={isSel ? 1 : 0.48}
+                >
+                  {shortDate(m.date)}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
 
