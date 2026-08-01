@@ -21,10 +21,10 @@ const CHAT = [
   { from: "me",  type: "text", text: "Absolutely not. Ask me again in a year.", t: "9:17 pm" },
   { from: "her", type: "text", text: "a year 🤨 confident", t: "9:18 pm" },
   /* ── VOICE NOTE 1 — replace src with your actual file path ── */
-  { from: "her", type: "voice", src: "/audio/voice1.mp3", dur: "0:47", t: "9:22 pm" },
+  { from: "her", type: "voice", src: "/audio/v1.ogg", dur: "0:08", t: "9:22 pm" },
   { from: "me",  type: "text", text: "okay. okay I'm smiling. this is your fault", t: "9:31 pm" },
   /* ── VOICE NOTE 2 — replace src with your actual file path ── */
-  { from: "her", type: "voice", src: "/audio/voice2.mp3", dur: "1:12", t: "9:44 pm" },
+  { from: "her", type: "voice", src: "/audio/v2.ogg", dur: "0:06", t: "9:44 pm" },
   { from: "me",  type: "text", text: "you can't just say things like that and expect me to be normal about it", t: "9:51 pm" },
 ];
 
