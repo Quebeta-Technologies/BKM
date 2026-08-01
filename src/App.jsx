@@ -29,7 +29,7 @@ function EggVoiceNote() {
   const [error, setError]       = useState(false);
 
   /* put your voice note file in public/audio/ */
-  const SRC = "/audio/egg-voice.ogg"; /* ← change filename to match your file */
+  const SRC = "/audio/love.mp3"; /* ← change filename to match your file */
 
   useEffect(() => {
     const audio = new Audio(SRC);
