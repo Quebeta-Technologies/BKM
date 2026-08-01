@@ -322,3 +322,18 @@ section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
   70%  { transform: translate(-50%,-50%) scale(0.6); opacity: 0.6; }
   100% { transform: translate(-50%,-50%) scale(3); opacity: 0; }
 }
+
+
+
+
+/* remove any browser default SVG border */
+svg {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.cons svg {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+}

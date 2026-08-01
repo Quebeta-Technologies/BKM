@@ -77,14 +77,14 @@ export default function Constellation() {
       <div
         ref={ref}
         className={`cons ${on ? "on" : ""}`}
-        style={{ marginTop: 32, position: "relative" }}
+        style={{ marginTop: 32, position: "relative", border: "none", outline: "none", background: "transparent" }}
       >
         <svg
           viewBox="0 0 800 420"
           className="w-full"
           role="group"
           aria-label="Constellation of our milestone dates"
-          style={{ display: "block", overflow: "visible" }}
+          style={{ display: "block", overflow: "visible", border: "none", outline: "none", background: "transparent" }}
         >
           <defs>
             <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
