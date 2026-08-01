@@ -254,3 +254,71 @@ section { padding-top: 3.5rem; padding-bottom: 3.5rem; }
 @keyframes eggMsg   { 0%{opacity:0;transform:scale(0.7)} 15%{opacity:1;transform:scale(1.08)} 30%{transform:scale(1)} 85%{opacity:1} 100%{opacity:0} }
 @keyframes eggPiece { 0%{opacity:0;transform:translate(0,0) scale(0.3) rotate(0deg)} 20%{opacity:1} 100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(1.1) rotate(360deg)} }
 @keyframes fadeIn   { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+
+
+
+
+
+
+
+/* ── UNLOCK TRANSITION ANIMATIONS ── */
+
+/* Petals falling */
+@keyframes petalFall {
+  0%   { opacity: 0; transform: translateY(-40px) translateX(0) rotate(0deg); }
+  10%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(110vh) translateX(var(--drift)) rotate(var(--rot)); }
+}
+
+/* Glitter sparkle pop */
+@keyframes glitterPop {
+  0%   { opacity: 0; transform: scale(0); }
+  30%  { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(0.2); }
+}
+
+/* Glass shards fly outward */
+@keyframes shardFly {
+  0%   { opacity: 0.8; transform: translate(0,0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.3); }
+}
+
+/* Door panels slide apart */
+@keyframes doorLeft {
+  0%   { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes doorRight {
+  0%   { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Seam light glow */
+@keyframes seamGlow {
+  0%   { opacity: 0; width: 2px; }
+  20%  { opacity: 1; width: 8px; box-shadow: 0 0 40px rgba(240,143,168,0.9); }
+  100% { opacity: 0; width: 80px; }
+}
+
+/* Her name reveal */
+@keyframes nameRevealAnim {
+  0%   { opacity: 0; transform: scale(0.7) translateY(20px); letter-spacing: 0.3em; }
+  30%  { opacity: 1; transform: scale(1.05) translateY(0); }
+  60%  { transform: scale(1); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1) translateY(-30px); }
+}
+@keyframes nameRevealSub {
+  0%   { opacity: 0; transform: translateY(10px); }
+  30%  { opacity: 1; transform: none; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Heart unlock pulse */
+@keyframes lockHeartUnlock {
+  0%   { transform: translate(-50%,-50%) scale(1); }
+  40%  { transform: translate(-50%,-50%) scale(1.8); filter: brightness(2); }
+  70%  { transform: translate(-50%,-50%) scale(0.6); opacity: 0.6; }
+  100% { transform: translate(-50%,-50%) scale(3); opacity: 0; }
+}
