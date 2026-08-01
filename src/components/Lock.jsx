@@ -63,12 +63,20 @@ function PulseRings() {
 function LoveTransition({ active, onDone }) {
   const canvasRef = useRef(null);
   const stateRef  = useRef({ animId: null, doneTimer: null });
+  const onDoneRef = useRef(onDone); // ← keep latest onDone without it being a dep
+
+  // keep the ref current without triggering the effect
+  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
 
   useEffect(() => {
     if (!active) return;
 
+    // cancel any previous run first (guards against Strict Mode double-fire)
+    cancelAnimationFrame(stateRef.current.animId);
+    clearTimeout(stateRef.current.doneTimer);
+
     /* ── schedule onDone ── */
-    stateRef.current.doneTimer = setTimeout(onDone, 7800);
+    stateRef.current.doneTimer = setTimeout(() => onDoneRef.current?.(), 7800);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,12 +91,6 @@ function LoveTransition({ active, onDone }) {
 
     const ctx = canvas.getContext("2d");
 
-    /* ══════════════════════════════════════════
-       STEP 1 — sample text → normalised points
-       We draw on a fixed 800×220 off-screen
-       canvas, read pixels, return normalised
-       (0-1) coords so they scale to any screen.
-    ══════════════════════════════════════════ */
     const sampleText = (text, fontSize) => {
       const OW = 800, OH = 220;
       const off = document.createElement("canvas");
@@ -102,7 +104,7 @@ function LoveTransition({ active, onDone }) {
       c.fillText(text, OW / 2, OH / 2);
       const data = c.getImageData(0, 0, OW, OH).data;
       const pts  = [];
-      const step = 7;          /* pixel stride — controls density */
+      const step = 7;
       for (let y = 0; y < OH; y += step)
         for (let x = 0; x < OW; x += step)
           if (data[(y * OW + x) * 4 + 3] > 100)
@@ -113,16 +115,10 @@ function LoveTransition({ active, onDone }) {
     const rawLine1 = sampleText("I love you", 118);
     const rawLine2 = sampleText("Rimi",        155);
 
-    /* ══════════════════════════════════════════
-       STEP 2 — map to screen coords
-       We keep a fixed aspect ratio block and
-       re-derive on every resize.
-    ══════════════════════════════════════════ */
     const buildTargets = () => {
       const W = canvas.width, H = canvas.height;
-      /* block never wider than 88 vw, never taller than 55 vh */
       const blockW = Math.min(W * 0.88, 680);
-      const lineH  = blockW * (220 / 800);   /* aspect of the off-screen canvas */
+      const lineH  = blockW * (220 / 800);
       const gap    = lineH * 0.25;
       const totalH = lineH * 2 + gap;
       const startY = H / 2 - totalH / 2;
@@ -141,20 +137,16 @@ function LoveTransition({ active, onDone }) {
 
     let targets = buildTargets();
 
-    /* ══════════════════════════════════════════
-       STEP 3 — build particles
-    ══════════════════════════════════════════ */
     const PETAL_COLORS = [
-      "#F08FA8","#FF85A1","#FBD5DE","#FFB3C6",   /* pinks */
-      "#F4C77B","#FFD9A0",                         /* golds */
-      "#C3A6F0","#DDD0FF",                         /* purples */
-      "#ffffff","#FFF0F5",                          /* whites */
+      "#F08FA8","#FF85A1","#FBD5DE","#FFB3C6",
+      "#F4C77B","#FFD9A0",
+      "#C3A6F0","#DDD0FF",
+      "#ffffff","#FFF0F5",
     ];
 
     const W0 = canvas.width, H0 = canvas.height;
 
     const particles = targets.map((t, i) => {
-      /* spawn from outside the viewport */
       const edge = i % 4;
       let sx, sy;
       if      (edge === 0) { sx = Math.random() * W0; sy = -80; }
@@ -166,22 +158,18 @@ function LoveTransition({ active, onDone }) {
       return {
         sx, sy,
         tx: t.x, ty: t.y,
-        /* explode out in the same radial direction */
         ex: t.x + Math.cos(angle) * Math.max(W0, H0) * 1.4,
         ey: t.y + Math.sin(angle) * Math.max(W0, H0) * 1.4,
         color : PETAL_COLORS[i % PETAL_COLORS.length],
-        type  : i % 3,          /* 0=petal  1=heart  2=star */
+        type  : i % 3,
         sz    : 5 + Math.random() * 6,
         rot   : Math.random() * Math.PI * 2,
         rotSpd: (Math.random() - 0.5) * 0.05,
-        drift : (Math.random() - 0.5) * 2,   /* lateral wobble */
-        phase : Math.random() * Math.PI * 2, /* wobble phase offset */
+        drift : (Math.random() - 0.5) * 2,
+        phase : Math.random() * Math.PI * 2,
       };
     });
 
-    /* ══════════════════════════════════════════
-       STEP 4 — sparkles for the blast
-    ══════════════════════════════════════════ */
     const sparks = Array.from({ length: 90 }, (_, i) => {
       const cx = canvas.width / 2, cy = canvas.height / 2;
       const a  = Math.random() * Math.PI * 2;
@@ -196,9 +184,6 @@ function LoveTransition({ active, onDone }) {
       };
     });
 
-    /* ══════════════════════════════════════════
-       STEP 5 — draw helpers
-    ══════════════════════════════════════════ */
     const drawPetal = (ctx, x, y, sz, rot, color, alpha) => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
@@ -207,7 +192,6 @@ function LoveTransition({ active, onDone }) {
       ctx.shadowColor = color;
       ctx.shadowBlur  = sz * 2;
       ctx.fillStyle   = color;
-      /* ellipse petal */
       ctx.beginPath();
       ctx.ellipse(0, -sz * 0.4, sz * 0.28, sz * 0.6, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -258,51 +242,43 @@ function LoveTransition({ active, onDone }) {
       else drawPetal(ctx, x, y, sz, rot, color, alpha);
     };
 
-    /* ══════════════════════════════════════════
-       STEP 6 — animation phases (frames @60fps)
-       GATHER  2.5 s  →  HOLD  2.5 s  →  BLAST  0.9 s  →  FADE  1 s
-    ══════════════════════════════════════════ */
-    const FPS        = 60;
-    const F_GATHER   = Math.round(2.5  * FPS);
-    const F_HOLD     = Math.round(2.5  * FPS);
-    const F_BLAST    = Math.round(0.9  * FPS);
-    const F_FADE     = Math.round(1.0  * FPS);
-    const F_TOTAL    = F_GATHER + F_HOLD + F_BLAST + F_FADE;
+    const FPS      = 60;
+    const F_GATHER = Math.round(2.5 * FPS);
+    const F_HOLD   = Math.round(2.5 * FPS);
+    const F_BLAST  = Math.round(0.9 * FPS);
+    const F_FADE   = Math.round(1.0 * FPS);
+    const F_TOTAL  = F_GATHER + F_HOLD + F_BLAST + F_FADE;
 
-    const easeOut3   = t => 1 - Math.pow(1 - t, 3);
-    const easeIn3    = t => t * t * t;
+    const easeOut3 = t => 1 - Math.pow(1 - t, 3);
+    const easeIn3  = t => t * t * t;
 
     let frame = 0;
     let sparksActive = false;
+    let cancelled = false; // ← guard so cleanup stops the loop cleanly
 
     const tick = () => {
+      if (cancelled) return; // ← stop immediately if cleaned up
+
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
       frame++;
 
-      /* ── recalculate targets if canvas was resized ── */
       if (W !== W0 || H !== H0) {
         const fresh = buildTargets();
         fresh.forEach((t, i) => {
-          if (particles[i]) {
-            particles[i].tx = t.x;
-            particles[i].ty = t.y;
-          }
+          if (particles[i]) { particles[i].tx = t.x; particles[i].ty = t.y; }
         });
       }
 
-      /* ── phase clocks ── */
       let ph, lt;
-      if      (frame <= F_GATHER)                        { ph = "gather";  lt = frame / F_GATHER; }
-      else if (frame <= F_GATHER + F_HOLD)               { ph = "hold";    lt = (frame - F_GATHER) / F_HOLD; }
-      else if (frame <= F_GATHER + F_HOLD + F_BLAST)     { ph = "blast";   lt = (frame - F_GATHER - F_HOLD) / F_BLAST; }
-      else if (frame <= F_TOTAL)                         { ph = "fade";    lt = (frame - F_GATHER - F_HOLD - F_BLAST) / F_FADE; }
+      if      (frame <= F_GATHER)                    { ph = "gather";  lt = frame / F_GATHER; }
+      else if (frame <= F_GATHER + F_HOLD)           { ph = "hold";    lt = (frame - F_GATHER) / F_HOLD; }
+      else if (frame <= F_GATHER + F_HOLD + F_BLAST) { ph = "blast";   lt = (frame - F_GATHER - F_HOLD) / F_BLAST; }
+      else if (frame <= F_TOTAL)                     { ph = "fade";    lt = (frame - F_GATHER - F_HOLD - F_BLAST) / F_FADE; }
       else { cancelAnimationFrame(stateRef.current.animId); return; }
 
-      /* ── kick sparkles at start of blast ── */
       if (ph === "blast" && !sparksActive) {
         sparksActive = true;
-        /* scatter from centre of text block */
         const cx = W / 2;
         const blockW = Math.min(W * 0.88, 680);
         const lineH  = blockW * (220 / 800);
@@ -318,29 +294,24 @@ function LoveTransition({ active, onDone }) {
         });
       }
 
-      /* ── draw particles ── */
       particles.forEach((p, i) => {
         p.rot += p.rotSpd;
         let px, py, alpha, sz;
 
         if (ph === "gather") {
           const e = easeOut3(lt);
-          /* gentle S-curve wobble on the way in */
           const wobble = Math.sin(lt * Math.PI * 3 + p.phase) * 18 * (1 - lt);
           px    = p.sx + (p.tx - p.sx) * e + wobble * Math.cos(p.rot);
           py    = p.sy + (p.ty - p.sy) * e + wobble * Math.sin(p.rot);
           alpha = lt < 0.08 ? lt / 0.08 : 1;
           sz    = p.sz * (0.4 + e * 0.6);
-
         } else if (ph === "hold") {
-          /* breathe gently in place */
           const breath = Math.sin(frame * 0.07 + p.phase) * 1.6;
           px    = p.tx + breath * 0.6;
           py    = p.ty + Math.cos(frame * 0.055 + p.phase) * 1.1;
           alpha = 0.92 + Math.sin(frame * 0.09 + p.phase) * 0.08;
           sz    = p.sz * (1 + Math.sin(frame * 0.065 + p.phase) * 0.07);
           p.rotSpd = 0.015;
-
         } else if (ph === "blast") {
           const e = easeIn3(lt);
           px    = p.tx + (p.ex - p.tx) * e;
@@ -348,21 +319,19 @@ function LoveTransition({ active, onDone }) {
           alpha = Math.max(0, 1 - e * 1.15);
           sz    = p.sz * (1 + e * 4);
           p.rotSpd *= 1.1;
-
-        } else { /* fade — particles are gone */
+        } else {
           return;
         }
 
         drawParticle(ctx, px, py, sz, p.rot, p.color, alpha, p.type);
       });
 
-      /* ── draw sparkles during blast + fade ── */
       if (ph === "blast" || ph === "fade") {
         const globalFade = ph === "fade" ? Math.max(0, 1 - lt) : 1;
         sparks.forEach(s => {
           s.x  += s.vx;
           s.y  += s.vy;
-          s.vy += 0.18;           /* gentle gravity */
+          s.vy += 0.18;
           s.vx *= 0.97;
           s.life = Math.max(0, s.life - s.decay);
           if (s.life <= 0) return;
@@ -372,7 +341,6 @@ function LoveTransition({ active, onDone }) {
           ctx.shadowColor = s.color;
           ctx.shadowBlur  = s.sz * 3;
           ctx.fillStyle   = s.color;
-          /* tiny 4-point star */
           ctx.translate(s.x, s.y);
           ctx.beginPath();
           for (let k = 0; k < 8; k++) {
@@ -394,11 +362,12 @@ function LoveTransition({ active, onDone }) {
     stateRef.current.animId = requestAnimationFrame(tick);
 
     return () => {
+      cancelled = true; // ← stop the loop on cleanup
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(stateRef.current.animId);
       clearTimeout(stateRef.current.doneTimer);
     };
-  }, [active, onDone]);
+  }, [active]); // ← onDone removed from deps, accessed via ref instead
 
   if (!active) return null;
 
@@ -406,36 +375,35 @@ function LoveTransition({ active, onDone }) {
     <div
       aria-hidden="true"
       style={{
-        position : "fixed",
-        inset     : 0,
-        zIndex    : 300,
-        background: "rgba(8, 6, 20, 0.97)",
-        animation : "loveTransFade 7.8s ease forwards",
-        overflow  : "hidden",
+        position     : "fixed",
+        inset        : 0,
+        zIndex       : 300,
+        background   : "rgba(8, 6, 20, 0.97)",
+        animation    : "loveTransFade 7.8s ease forwards",
+        overflow     : "hidden",
         pointerEvents: "none",
       }}
     >
-      {/* soft radial glow behind the text */}
       <div style={{
-        position  : "absolute",
-        left      : "50%",
-        top       : "50%",
-        transform : "translate(-50%, -50%)",
-        width     : "min(90vw, 700px)",
-        height    : "min(60vw, 420px)",
+        position    : "absolute",
+        left        : "50%",
+        top         : "50%",
+        transform   : "translate(-50%, -50%)",
+        width       : "min(90vw, 700px)",
+        height      : "min(60vw, 420px)",
         borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(240,143,168,0.20) 0%, transparent 70%)",
-        animation : "loveTransGlow 7.8s ease forwards",
+        background  : "radial-gradient(ellipse, rgba(240,143,168,0.20) 0%, transparent 70%)",
+        animation   : "loveTransGlow 7.8s ease forwards",
       }} />
 
       <canvas
         ref={canvasRef}
         style={{
           position: "absolute",
-          inset    : 0,
-          width    : "100%",
-          height   : "100%",
-          display  : "block",
+          inset   : 0,
+          width   : "100%",
+          height  : "100%",
+          display : "block",
         }}
       />
     </div>
