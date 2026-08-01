@@ -186,12 +186,18 @@ export const CHAT = [
 /* Leave src as null for a placeholder. tilt is the rotation in degrees.    */
 
 export const PHOTOS = [
-  { src: null, caption: "the first one", tilt: -4 },
-  { src: null, caption: "you, mid-laugh", tilt: 3 },
-  { src: null, caption: "25.12.25", tilt: -2 },
-  { src: null, caption: "us, no reason", tilt: 5 },
-  { src: null, caption: "your favourite", tilt: -5 },
-  { src: null, caption: "2.13 am", tilt: 2 },
+  { src: null, caption: "the first one",      tilt: -4 },
+  { src: null, caption: "you, mid-laugh",     tilt:  3 },
+  { src: null, caption: "25.12.25",           tilt: -2 },
+  { src: null, caption: "us, no reason",      tilt:  5 },
+  { src: null, caption: "your favourite",     tilt: -5 },
+  { src: null, caption: "2.13 am",            tilt:  2 },
+  { src: null, caption: "the look",           tilt: -3 },
+  { src: null, caption: "01.01.26",           tilt:  4 },
+  { src: null, caption: "you didn't know i took this", tilt: -6 },
+  { src: null, caption: "sunday morning",     tilt:  1 },
+  { src: null, caption: "my favourite",       tilt: -4 },
+  { src: null, caption: "just because",       tilt:  3 },
 ];
 
 /* ── 10. THE LAST PAGE ───────────────────────────────────────────────────── */
