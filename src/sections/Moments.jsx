@@ -125,7 +125,7 @@ function StackedDeck({ photos }) {
   /* FRONT CARD */
   const frontTransform = {
     idle : "rotate(" + (photos[current].tilt * 0.5) + "deg) scale(1) translateY(0px)",
-    out  : "translateX(" + (dir * 115) + "%) rotate(" + (dir * 16) + "deg) scale(0.85) translateY(24px)",
+    out  : "translateX(" + (dir * 80) + "%) rotate(" + (dir * 12) + "deg) scale(0.88) translateY(16px)",
     in   : "rotate(" + (photos[current].tilt * 0.5) + "deg) scale(1) translateY(0px)",
   }[phase];
 
@@ -163,14 +163,21 @@ function StackedDeck({ photos }) {
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:24 }}>
 
       {/* stack container */}
+      {/* outer clip — prevents flung card from affecting page layout */}
+      <div style={{
+        width:"min(330px, 90vw)",
+        margin:"0 auto",
+        overflow:"hidden",
+        padding:"20px 20px 8px",
+        isolation:"isolate",
+      }}>
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
           position:"relative",
-          width:"min(290px, 82vw)",
-          height:"min(400px, 115vw)",
-          margin:"0 auto",
+          width:"100%",
+          height:"min(390px, 110vw)",
         }}
       >
 
@@ -184,7 +191,7 @@ function StackedDeck({ photos }) {
           boxShadow:"0 2px 12px rgba(0,0,0,0.18)",
           overflow:"hidden",
           pointerEvents:"none",
-          willChange:"transform",
+
         }}>
           <CardInner photo={photos[next2]} dim />
         </div>
@@ -200,7 +207,7 @@ function StackedDeck({ photos }) {
           overflow:"hidden",
           zIndex:1,
           pointerEvents:"none",
-          willChange:"transform",
+
         }}>
           <CardInner photo={photos[next1]} dim={phase === "idle"} />
         </div>
@@ -222,7 +229,7 @@ function StackedDeck({ photos }) {
             cursor: phase === "idle" ? "pointer" : "default",
             zIndex:2,
             overflow:"hidden",
-            willChange:"transform",
+  
           }}
         >
           {/* gradient top stripe */}
@@ -271,6 +278,7 @@ function StackedDeck({ photos }) {
           ))}
         </div>
       </div>
+      </div>{/* end clip wrapper */}
 
       {/* dot nav */}
       <div style={{
@@ -358,7 +366,7 @@ function DraggablePola({ photo, index, onLift, zIndex }) {
           boxShadow, zIndex, cursor: dragging ? "grabbing" : "grab",
           userSelect:"none", background:"#f5f0e8", borderRadius:3,
           padding:"10px 10px 44px", width:"100%", margin:0,
-          willChange:"transform",
+
         }}
       >
         {hovered && (
@@ -458,7 +466,7 @@ export default function Moments() {
   };
 
   return (
-    <section style={{ padding:"4rem 1.25rem 3rem", maxWidth:1100, margin:"0 auto", position:"relative" }}>
+    <section style={{ padding:"4rem 1.25rem 3rem", maxWidth:1100, margin:"0 auto", position:"relative", isolation:"isolate" }}>
 
       <style>{`
         @keyframes polaReveal {
