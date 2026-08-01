@@ -220,3 +220,47 @@ export const FINALE = {
     "Fine. You win. I love you the most.",
   ],
 };
+
+
+export const MILESTONES = [
+  {
+    id: "hello",
+    date: "2025-08-10",
+    label: "The first hello",
+    where: "WhatsApp, two blue ticks",
+    x: 92, y: 300,
+    emoji: "💬",
+    photos: ["/photos/hello-1.jpg"], // ← add your photo paths here
+    text: "One message...",
+  },
+  {
+    id: "meet",
+    date: "2025-08-24",
+    label: "The first time I saw you",
+    where: "In person, finally",
+    x: 252, y: 148,
+    emoji: "👀",
+    photos: ["/photos/meet-1.jpg", "/photos/meet-2.jpg"], // ← multiple photos supported
+    text: "Fourteen days of talking...",
+  },
+  {
+    id: "date",
+    date: "2025-12-25",
+    label: "Our first date",
+    where: "Christmas Day",
+    x: 470, y: 96,
+    emoji: "🎄",
+    photos: ["/photos/date-1.jpg"],
+    text: "Of every day in the year...",
+  },
+  {
+    id: "kiss",
+    date: "2026-01-01",
+    label: "Our first kiss",
+    where: "The very first page of the year",
+    x: 690, y: 252,
+    emoji: "💋",
+    photos: ["/photos/kiss-1.jpg"],
+    text: "A whole new year...",
+  },
+];

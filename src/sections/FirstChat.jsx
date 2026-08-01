@@ -14,18 +14,17 @@ import { daysBetween } from "../lib/utils.js";
    and set dur to the duration string e.g. "0:47"
 ───────────────────────────────────────────────────────────── */
 const CHAT = [
-  { from: "her", type: "text", text: "Hey 👋 I hope this isn't weird... I've been meaning to message you all day.", t: "9:14 pm" },
-  { from: "me",  type: "text", text: "not weird at all 😊 I was kind of hoping you would", t: "9:16 pm" },
-  { from: "me",  type: "text", text: "Okay good. I had a whole backup plan if you'd said it was weird.", t: "9:16 pm" },
-  { from: "her", type: "text", text: "now I need to hear the backup plan", t: "9:17 pm" },
-  { from: "me",  type: "text", text: "Absolutely not. Ask me again in a year.", t: "9:17 pm" },
-  { from: "her", type: "text", text: "a year 🤨 confident", t: "9:18 pm" },
+  { from: "me",  type: "text", text: "Hey, Chinhi Paruchu!!!!!!!", t: "9:14 pm" },
+  { from: "her", type: "text", text: "Na Kia?", t: "9:16 pm" },
+  { from: "me",  type: "text", text: "Biki Kahuthili", t: "9:16 pm" },
+  { from: "her", type: "text", text: "Ohhhh Janili!!!", t: "9:17 pm" },
+  { from: "me",  type: "text", text: "Au kemti achu", t: "9:17 pm" },
+  { from: "her", type: "text", text: "Hn bhala", t: "9:18 pm" },
   /* ── VOICE NOTE 1 — replace src with your actual file path ── */
   { from: "her", type: "voice", src: "/audio/v1.ogg", dur: "0:08", t: "9:22 pm" },
-  { from: "me",  type: "text", text: "okay. okay I'm smiling. this is your fault", t: "9:31 pm" },
   /* ── VOICE NOTE 2 — replace src with your actual file path ── */
   { from: "her", type: "voice", src: "/audio/v2.ogg", dur: "0:06", t: "9:44 pm" },
-  { from: "me",  type: "text", text: "you can't just say things like that and expect me to be normal about it", t: "9:51 pm" },
+  { from: "me",  type: "text", text: "Good night Love you 😍", t: "9:51 pm" },
 ];
 
 const REACTIONS = ["❤️", "😍", "🥺", "💕", "😊", "✨", "🫶"];
