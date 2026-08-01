@@ -207,7 +207,7 @@ export const FINALE = {
     "But I'll take the excuse. Because there are things I don't say often enough, and today I get to say all of them at once.",
     "You are the best thing that has happened to me. Not the most exciting, not the most dramatic, the best. The kind of good that shows up in ordinary weeks and quietly makes them worth remembering.",
     "And Sorry for all those tears afterall all were to make you strong.",
-    "Now you are strong enough and i promise there won't be any tears in your eyes."
+    "Now you are strong enough and i promise there won't be any tears in your eyes.",
     "Thank you for replying that night. Thank you for every day since. Thank you for being someone I get to be completely, unglamorously myself around.",
   ],
   closing: "Happy Girlfriend's Day, my love. You are so, so wildly loved.",
