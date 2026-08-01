@@ -75,12 +75,7 @@ export default function Constellation() {
       </Reveal>
 
       <div ref={ref} className={`cons ${on ? "on" : ""}`} style={{ marginTop: 32 }}>
-        <svg
-          viewBox="0 0 800 400"
-          className="w-full"
-          role="group"
-          style={{ overflow: "visible" }}
-        >
+        <svg viewBox="0 0 800 400" className="w-full" role="group" style={{ overflow: "visible" }}>
           <defs>
             <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
               <stop offset="0%" stopColor="#F08FA8" stopOpacity=".35" />
