@@ -177,7 +177,7 @@ function EggVoiceNote() {
         }}>
           <span>{playing ? currentTime : "0:00"}</span>
           <span style={{ color:"rgba(240,143,168,0.7)", fontSize:"0.5rem" }}>
-            {loaded ? "her voice ♥" : "loading…"}
+            {loaded ? "for her ♥" : "loading…"}
           </span>
         </div>
       </div>
