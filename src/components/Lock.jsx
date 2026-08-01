@@ -62,7 +62,7 @@ function PulseRings() {
 ───────────────────────────────────────────── */
 import React, { useEffect, useRef } from "react";
 
-export default function LoveTransition({ active, onDone }) {
+function LoveTransition({ active, onDone }) {
   const canvasRef = useRef(null);
   const stateRef  = useRef({ animId: null, doneTimer: null });
 
