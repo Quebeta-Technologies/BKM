@@ -22,9 +22,9 @@ function Sparkles({ x, y, active }) {
     const p = Array.from({ length: 14 }, (_, i) => ({
       id: i,
       angle: (i / 14) * Math.PI * 2,
-      dist: 28 + Math.random() * 45,
-      size: 2 + Math.random() * 3,
-      dur: 0.5 + Math.random() * 0.6,
+      dist: 28 + Math.random() * 40,
+      size: 1.5 + Math.random() * 2.5,
+      dur: 0.5 + Math.random() * 0.5,
     }));
     setParts(p);
     const t = setTimeout(() => setParts([]), 1200);
@@ -74,92 +74,135 @@ export default function Constellation() {
         </p>
       </Reveal>
 
-      <div ref={ref} className={`cons ${on ? "on" : ""}`} style={{ marginTop: 32 }}>
-        <svg viewBox="0 0 800 400" className="w-full" role="group" style={{ overflow: "visible" }}>
+      {/* wrapper div — NO overflow hidden, just position relative */}
+      <div
+        ref={ref}
+        className={`cons ${on ? "on" : ""}`}
+        style={{ marginTop: 32, position: "relative" }}
+      >
+        <svg
+          viewBox="0 0 800 420"
+          className="w-full"
+          role="group"
+          aria-label="Constellation of our milestone dates"
+          style={{ display: "block", overflow: "visible" }}
+        >
           <defs>
             <linearGradient id="gg" x1="0" y1="1" x2="1" y2="0">
               <stop offset="0%" stopColor="#F08FA8" stopOpacity=".35" />
               <stop offset="50%" stopColor="#F4C77B" stopOpacity=".9" />
               <stop offset="100%" stopColor="#C3A6F0" stopOpacity=".5" />
             </linearGradient>
-            <filter id="glow" x="-120%" y="-120%" width="340%" height="340%">
-              <feGaussianBlur stdDeviation="6" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+
+            {/* ── KEY FIX: filters scoped tightly, no huge expansion ── */}
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
             </filter>
-            <filter id="glow2" x="-200%" y="-200%" width="500%" height="500%">
-              <feGaussianBlur stdDeviation="12" result="b" />
-              <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+            <filter id="glow2" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="7" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
             </filter>
+
+            {/* Clip so nothing draws outside the viewBox boundary */}
+            <clipPath id="svgClip">
+              <rect x="-100" y="-60" width="1000" height="560" />
+            </clipPath>
           </defs>
 
-          <path d={buildPath(MILESTONES)} className="cons-line" />
-          <path
-            d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
-            fill="none" stroke="#C3A6F0" strokeOpacity=".35" strokeWidth="1" strokeDasharray="3 7"
-          />
-          <circle cx={last.x+76} cy={last.y+86} r="3" fill="#C3A6F0" className="pulse" />
-          <text x={last.x+76} y={last.y+114} textAnchor="middle" className="star-lab" opacity=".6">
-            and everything after
-          </text>
+          <g clipPath="url(#svgClip)">
+            <path d={buildPath(MILESTONES)} className="cons-line" />
 
-          {MILESTONES.map((m) => {
-            const isSel = m.id === selected;
-            const above = m.y < 200;
-            return (
-              <g
-                key={m.id}
-                className="star-hit"
-                tabIndex={0}
-                role="button"
-                aria-pressed={isSel}
-                aria-label={`${m.label}, ${fmtDate(m.date)}`}
-                onClick={() => select(m.id)}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), select(m.id))}
-              >
-                <circle cx={m.x} cy={m.y} r="36" fill="transparent" />
+            {/* trailing dotted line beyond last star */}
+            <path
+              d={`M ${last.x} ${last.y} C ${last.x+30} ${last.y+28}, ${last.x+55} ${last.y+53}, ${last.x+72} ${last.y+78}`}
+              fill="none" stroke="#C3A6F0" strokeOpacity=".35"
+              strokeWidth="1" strokeDasharray="3 7"
+            />
+            <circle cx={last.x+76} cy={last.y+86} r="3" fill="#C3A6F0" className="pulse" />
+            <text x={last.x+76} y={last.y+110}
+              textAnchor="middle" className="star-lab" opacity=".55">
+              and everything after
+            </text>
 
-                {isSel && (
+            {MILESTONES.map((m) => {
+              const isSel = m.id === selected;
+              const above = m.y < 200;
+              return (
+                <g
+                  key={m.id}
+                  className="star-hit"
+                  tabIndex={0}
+                  role="button"
+                  aria-pressed={isSel}
+                  aria-label={`${m.label}, ${fmtDate(m.date)}`}
+                  onClick={() => select(m.id)}
+                  onKeyDown={(e) =>
+                    (e.key === "Enter" || e.key === " ") &&
+                    (e.preventDefault(), select(m.id))
+                  }
+                >
+                  {/* big transparent hit area */}
+                  <circle cx={m.x} cy={m.y} r="38" fill="transparent" />
+
+                  {/* selected pulse ring — small radius so it stays inside */}
+                  {isSel && (
+                    <circle
+                      cx={m.x} cy={m.y} r="18"
+                      fill="none"
+                      stroke="#F08FA8"
+                      strokeOpacity=".55"
+                      strokeWidth="1"
+                      style={{ animation: "starPulseRing 1.8s ease-out infinite" }}
+                    />
+                  )}
+
+                  {/* halo */}
                   <circle
-                    cx={m.x} cy={m.y} r="22"
-                    fill="none" stroke="#F08FA8" strokeOpacity=".5" strokeWidth="1"
-                    style={{ animation: "starPulseRing 1.6s ease-out infinite" }}
+                    className="star-halo"
+                    cx={m.x} cy={m.y}
+                    r={isSel ? 16 : 10}
+                    fill={isSel ? "#F08FA8" : "#F4C77B"}
+                    opacity={isSel ? 0.25 : 0.08}
                   />
-                )}
 
-                <circle
-                  className="star-halo"
-                  cx={m.x} cy={m.y}
-                  r={isSel ? 18 : 12}
-                  fill={isSel ? "#F08FA8" : "#F4C77B"}
-                  opacity={isSel ? 0.28 : 0.1}
-                />
-                <circle
-                  className="star-core"
-                  cx={m.x} cy={m.y}
-                  r={isSel ? 9 : 5}
-                  fill={isSel ? "#FFE9EF" : "#F4C77B"}
-                  filter={isSel ? "url(#glow2)" : "url(#glow)"}
-                />
+                  {/* core */}
+                  <circle
+                    className="star-core"
+                    cx={m.x} cy={m.y}
+                    r={isSel ? 8 : 4.5}
+                    fill={isSel ? "#FFE9EF" : "#F4C77B"}
+                    filter={isSel ? "url(#glow2)" : "url(#glow)"}
+                  />
 
-                <Sparkles x={m.x} y={m.y} active={sparked === m.id} />
+                  <Sparkles x={m.x} y={m.y} active={sparked === m.id} />
 
-                <text
-                  x={m.x} y={above ? m.y - 38 : m.y + 46}
-                  textAnchor="middle" className="star-lab"
-                  opacity={isSel ? 1 : 0.6}
-                >
-                  {m.label}
-                </text>
-                <text
-                  x={m.x} y={above ? m.y - 20 : m.y + 30}
-                  textAnchor="middle" className="star-date"
-                  opacity={isSel ? 1 : 0.5}
-                >
-                  {shortDate(m.date)}
-                </text>
-              </g>
-            );
-          })}
+                  <text
+                    x={m.x} y={above ? m.y - 32 : m.y + 42}
+                    textAnchor="middle"
+                    className="star-lab"
+                    opacity={isSel ? 1 : 0.58}
+                  >
+                    {m.label}
+                  </text>
+                  <text
+                    x={m.x} y={above ? m.y - 16 : m.y + 27}
+                    textAnchor="middle"
+                    className="star-date"
+                    opacity={isSel ? 1 : 0.48}
+                  >
+                    {shortDate(m.date)}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
@@ -170,12 +213,16 @@ export default function Constellation() {
       >
         <p className="eyebrow mb-2">
           {active.where}
-          {gap !== null && <span className="soft"> &nbsp;·&nbsp; {gap} days later</span>}
+          {gap !== null && (
+            <span className="soft"> &nbsp;·&nbsp; {gap} days later</span>
+          )}
         </p>
         <h3 className="display mb-1" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
           {active.label}
         </h3>
-        <p className="script rose mb-4" style={{ fontSize: "1.5rem" }}>{fmtDate(active.date)}</p>
+        <p className="script rose mb-4" style={{ fontSize: "1.5rem" }}>
+          {fmtDate(active.date)}
+        </p>
         <p className="soft leading-relaxed max-w-2xl text-sm">{active.text}</p>
       </div>
     </section>
