@@ -61,89 +61,148 @@ function LoveTransition({ active, onDone }) {
 
   useEffect(() => {
     if (!active) return;
-    const doneTimer = setTimeout(onDone, 5000);
+    const doneTimer = setTimeout(onDone, 5500);
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const W = canvas.width  = window.innerWidth;
     const H = canvas.height = window.innerHeight;
-    const cx = W / 2, cy = H / 2;
+    const cx = W / 2;
+    const cy = H / 2;
 
     /* ── sample text pixels ── */
-    const sampleText = (text, fontSize) => {
+    const sampleText = (text, fontSize, yOffset) => {
       const off = document.createElement("canvas");
-      off.width = W; off.height = 200;
+      off.width = W; off.height = 220;
       const c = off.getContext("2d");
-      c.clearRect(0, 0, W, 200);
+      c.clearRect(0, 0, W, 220);
       c.fillStyle = "#fff";
-      c.font = `${fontSize}px Georgia, serif`;
+      c.font = `bold ${fontSize}px Georgia, serif`;
       c.textAlign = "center";
       c.textBaseline = "middle";
-      c.fillText(text, W / 2, 100);
-      const data = c.getImageData(0, 0, W, 200).data;
+      c.fillText(text, W / 2, 110);
+      const data = c.getImageData(0, 0, W, 220).data;
       const pts = [];
-      const step = Math.max(2, Math.floor(W / 160));
-      for (let y = 0; y < 200; y += step)
+      const step = Math.max(3, Math.floor(W / 120));
+      for (let y = 0; y < 220; y += step)
         for (let x = 0; x < W; x += step)
           if (data[(y * W + x) * 4 + 3] > 100)
-            pts.push({ x, y: y + (cy - 100) });
+            pts.push({ x, y: y + yOffset });
       return pts;
     };
 
-    const fontSize1 = Math.min(W * 0.1, 80);
-    const fontSize2 = Math.min(W * 0.14, 110);
+    const fs1 = Math.min(W * 0.09, 72);
+    const fs2 = Math.min(W * 0.13, 100);
+    const line1Y = cy - fs1 * 0.8;
+    const line2Y = cy + fs2 * 0.55;
 
-    /* sample both lines */
-    const pts1 = sampleText("I love you", fontSize1);
-    const pts2Raw = sampleText("Rimi", fontSize2);
-    /* shift Rimi down */
-    const lineGap = fontSize1 * 1.4;
-    const pts2 = pts2Raw.map(p => ({ x: p.x, y: p.y + lineGap }));
+    const pts1 = sampleText("I love you", fs1, line1Y - 110);
+    const pts2 = sampleText("Rimi", fs2, line2Y - 110);
     const allPts = [...pts1, ...pts2];
 
-    const PETAL_GLYPHS = ["🌸","✿","❀","🌺","🌷","♥","✦"];
-    const COLORS = ["#F08FA8","#FBD5DE","#F4C77B","#C3A6F0","#fff","#FFD6E0"];
+    if (allPts.length === 0) { cancelAnimationFrame(animRef.current); return; }
 
-    /* one petal per sampled point */
-    const petals = allPts.map((pt, i) => {
-      /* start from random position around screen */
-      const startAngle = Math.random() * Math.PI * 2;
-      const startDist  = Math.min(W, H) * (0.5 + Math.random() * 0.5);
+    const COLORS = [
+      "#F08FA8","#F08FA8","#FBD5DE","#F4C77B",
+      "#C3A6F0","#fff","#FFB3C6","#FF85A1",
+    ];
+
+    /* draw a petal shape */
+    const drawPetal = (ctx, x, y, size, rot, color, alpha, shape) => {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+
+      if (shape === 0) {
+        /* heart */
+        const s = size * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, s * 0.3);
+        ctx.bezierCurveTo(s, -s * 0.3, s * 1.5, s * 0.8, 0, s * 1.6);
+        ctx.bezierCurveTo(-s * 1.5, s * 0.8, -s, -s * 0.3, 0, s * 0.3);
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = size * 1.2;
+        ctx.fill();
+
+      } else if (shape === 1) {
+        /* 4-petal flower */
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = size;
+        for (let i = 0; i < 4; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI) / 2);
+          ctx.beginPath();
+          ctx.ellipse(0, -size * 0.5, size * 0.3, size * 0.55, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+
+      } else if (shape === 2) {
+        /* star/sparkle */
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = size * 1.5;
+        const spikes = 6;
+        ctx.beginPath();
+        for (let i = 0; i < spikes * 2; i++) {
+          const r = i % 2 === 0 ? size * 0.55 : size * 0.22;
+          const a = (i * Math.PI) / spikes;
+          i === 0 ? ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r)
+                  : ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+      } else {
+        /* simple glowing circle */
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = size * 1.4;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    };
+
+    /* build particles */
+    const particles = allPts.map((pt, i) => {
+      const angle = Math.random() * Math.PI * 2;
+      const dist  = Math.min(W, H) * (0.4 + Math.random() * 0.6);
+      const color = COLORS[i % COLORS.length];
+      const shape = i % 4; /* cycle through shapes */
       return {
-        /* start pos — random swirl around screen */
-        sx: cx + Math.cos(startAngle) * startDist,
-        sy: cy + Math.sin(startAngle) * startDist,
-        /* target pos — the letter pixel */
-        tx: pt.x,
-        ty: pt.y,
-        /* current pos */
-        x: cx + Math.cos(startAngle) * startDist,
-        y: cy + Math.sin(startAngle) * startDist,
-        /* scatter pos — blast outward on explode */
-        ex: cx + Math.cos(startAngle) * startDist * 2.5,
-        ey: cy + Math.sin(startAngle) * startDist * 2.5,
-        glyph: PETAL_GLYPHS[i % PETAL_GLYPHS.length],
-        color: COLORS[i % COLORS.length],
-        size : 10 + Math.random() * 8,
-        rot  : Math.random() * 360,
-        rotSpd: (Math.random() - 0.5) * 4,
+        sx: cx + Math.cos(angle) * dist,
+        sy: cy + Math.sin(angle) * dist,
+        tx: pt.x, ty: pt.y,
+        ex: cx + Math.cos(angle) * dist * 3,
+        ey: cy + Math.sin(angle) * dist * 3,
+        x: cx + Math.cos(angle) * dist,
+        y: cy + Math.sin(angle) * dist,
+        color, shape,
+        size: 6 + Math.random() * 6,
+        rot: Math.random() * Math.PI * 2,
+        rotSpd: (Math.random() - 0.5) * 0.08,
         alpha: 0,
+        swirl: Math.random() * Math.PI * 2,
       };
     });
 
-    /* ── phases ── */
-    /* 0-60:  swirl in (gather from random to letter shape) */
-    /* 60-120: hold (breathe gently in letter form)          */
-    /* 120-160: explode outward                              */
-    const GATHER  = 80;
-    const HOLD    = 70;
-    const EXPLODE = 55;
-    const TOTAL   = GATHER + HOLD + EXPLODE;
+    const GATHER = 90, HOLD = 80, EXPLODE = 60;
+    const TOTAL = GATHER + HOLD + EXPLODE;
     let t = 0;
 
-    const easeOut   = x => 1 - Math.pow(1-x, 3);
+    const easeOut   = x => 1 - Math.pow(1 - x, 3);
     const easeIn    = x => x * x * x;
-    const easeInOut = x => x < 0.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+    const easeInOut = x => x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2;
 
     const tick = () => {
       const ctx = canvas.getContext("2d");
@@ -159,54 +218,37 @@ function LoveTransition({ active, onDone }) {
         return;
       }
 
-      petals.forEach((p, i) => {
+      particles.forEach((p, i) => {
         p.rot += p.rotSpd;
         let px, py, alpha, sz;
 
         if (ph === "gather") {
           const e = easeInOut(lt);
-          /* gentle swirl path — arc toward target */
-          const swirl = (1 - lt) * Math.PI * 0.5;
-          const mx = p.sx + (p.tx - p.sx) * e;
-          const my = p.sy + (p.ty - p.sy) * e;
-          px    = mx + Math.sin(swirl + i * 0.1) * 30 * (1 - e);
-          py    = my + Math.cos(swirl + i * 0.1) * 20 * (1 - e);
-          alpha = 0.2 + e * 0.8;
-          sz    = p.size * (0.5 + e * 0.5);
+          const swirl = (1 - e) * Math.PI * 0.6;
+          px    = p.sx + (p.tx - p.sx) * e + Math.sin(swirl + i * 0.08) * 40 * (1 - e);
+          py    = p.sy + (p.ty - p.sy) * e + Math.cos(swirl + i * 0.08) * 30 * (1 - e);
+          alpha = 0.15 + e * 0.85;
+          sz    = p.size * (0.4 + e * 0.6);
 
         } else if (ph === "hold") {
-          /* gentle breathing in place */
-          const breath = Math.sin(t * 0.08 + i * 0.3) * 2;
+          const breath = Math.sin(t * 0.09 + i * 0.25) * 1.8;
           px    = p.tx + breath;
-          py    = p.ty + breath * 0.5;
-          alpha = 0.9 + Math.sin(t * 0.1 + i * 0.2) * 0.1;
-          sz    = p.size * (1 + Math.sin(t * 0.06 + i * 0.15) * 0.08);
+          py    = p.ty + Math.cos(t * 0.07 + i * 0.2) * 1.2;
+          alpha = 0.88 + Math.sin(t * 0.1 + i * 0.18) * 0.12;
+          sz    = p.size * (1 + Math.sin(t * 0.065 + i * 0.12) * 0.1);
+          /* slow rotation during hold */
+          p.rotSpd = Math.sin(t * 0.02 + i) * 0.03;
 
         } else {
-          /* EXPLODE — petals blast outward */
           const e = easeIn(lt);
           px    = p.tx + (p.ex - p.tx) * e;
-          py    = p.ty + (p.ey - p.ty) * e + e * e * 60; /* gravity */
-          alpha = Math.max(0, 1 - e * 1.4);
-          sz    = p.size * (1 + e * 1.8);
-          p.rotSpd *= 1.08; /* spin faster on explode */
+          py    = p.ty + (p.ey - p.ty) * e + e * e * 80;
+          alpha = Math.max(0, 1 - e * 1.3);
+          sz    = p.size * (1 + e * 2.5);
+          p.rotSpd = p.rotSpd * 1.1 + 0.05;
         }
 
-        /* draw petal as emoji on canvas */
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
-        ctx.translate(px, py);
-        ctx.rotate((p.rot * Math.PI) / 180);
-        ctx.font = `${sz}px serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        /* glow */
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur  = 12;
-        ctx.fillStyle   = p.color;
-        ctx.fillText(p.glyph, 0, 0);
-        ctx.restore();
+        drawPetal(ctx, px, py, sz, p.rot, p.color, alpha, p.shape);
       });
 
       animRef.current = requestAnimationFrame(tick);
@@ -224,22 +266,19 @@ function LoveTransition({ active, onDone }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 300,
-      background: "rgba(11,9,24,0.97)",
-      animation: "loveTransFade 5s ease forwards",
-      overflow: "hidden",
-      pointerEvents: "none",
+      background: "rgba(8,6,20,0.97)",
+      animation: "loveTransFade 5.5s ease forwards",
+      overflow: "hidden", pointerEvents: "none",
     }}>
-      {/* centre rose glow */}
       <div aria-hidden="true" style={{
         position: "absolute", left: "50%", top: "50%",
         transform: "translate(-50%,-50%)",
         width: "70vw", height: "50vw",
         maxWidth: 600, maxHeight: 400,
         borderRadius: "50%",
-        background: "radial-gradient(ellipse, rgba(240,143,168,0.22), transparent 70%)",
-        animation: "loveTransGlow 5s ease forwards",
+        background: "radial-gradient(ellipse, rgba(240,143,168,0.2), transparent 70%)",
+        animation: "loveTransGlow 5.5s ease forwards",
       }} />
-
       <canvas ref={canvasRef} style={{
         position: "absolute", inset: 0,
         width: "100%", height: "100%",
@@ -247,7 +286,6 @@ function LoveTransition({ active, onDone }) {
     </div>
   );
 }
-
 const BG_HEARTS = Array.from({ length: 18 }, () => ({
   size:  `${0.9 + Math.random() * 1.4}rem`,
   color: ["#F08FA8","#F4C77B","#C3A6F0","#FBD5DE"][Math.floor(Math.random() * 4)],
