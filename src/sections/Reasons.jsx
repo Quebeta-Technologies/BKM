@@ -447,12 +447,15 @@ function ProgressHearts({ current, total }) {
     }}>
       {Array.from({length: Math.min(total, 24)}).map((_, i) => (
         <span key={i} style={{
-          fontSize   : "0.65rem",
-          color      : i <= current ? "#F08FA8" : "rgba(255,255,255,0.12)",
-          transition : "color 0.4s ease, transform 0.3s ease",
-          transform  : i === current ? "scale(1.5)" : "scale(1)",
-          filter     : i === current ? "drop-shadow(0 0 4px #F08FA8)" : "none",
+          fontSize   : i === current ? "1rem" : "0.8rem",
+          color      : i <= current ? "#F08FA8" : "rgba(255,255,255,0.35)",
+          transition : "all 0.4s ease",
+          transform  : i === current ? "scale(1.4)" : "scale(1)",
+          filter     : i === current
+            ? "drop-shadow(0 0 6px #F08FA8)"
+            : i < current ? "drop-shadow(0 0 2px rgba(240,143,168,0.3))" : "none",
           display    : "inline-block",
+          lineHeight : 1.4,
         }}>
           {i <= current ? "♥" : "♡"}
         </span>
@@ -697,11 +700,13 @@ export default function Reasons({ burst }) {
           {/* open count */}
           <p style={{
             marginTop    : 16,
-            fontSize     : "0.6rem",
+            fontSize     : "0.68rem",
             letterSpacing: "0.28em",
             textTransform: "uppercase",
-            color        : "rgba(240,143,168,0.5)",
+            color        : "#F08FA8",
             fontFamily   : "Jost, sans-serif",
+            opacity      : 0.9,
+            textShadow   : "0 0 12px rgba(240,143,168,0.4)",
             animation    : openCount > 0 ? "openCountBounce 0.4s ease" : "none",
           }}>
             {openCount === 0
@@ -711,10 +716,10 @@ export default function Reasons({ burst }) {
 
           {/* swipe hint */}
           <p style={{
-            marginTop    : 6,
-            fontSize     : "0.55rem",
+            marginTop    : 8,
+            fontSize     : "0.6rem",
             letterSpacing: "0.22em",
-            color        : "rgba(255,255,255,0.2)",
+            color        : "rgba(210,200,230,0.55)",
             fontFamily   : "Jost, sans-serif",
           }}>
             swipe left or right to navigate
