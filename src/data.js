@@ -6,15 +6,14 @@
 
 /* ── 1. WHO ──────────────────────────────────────────────────────────────── */
 
-export const HER_NAME = "Rimi"; // her name, or your nickname for her
-export const YOUR_SIGNOFF = "Your Biki"; // how you sign your letters
+export const HER_NAME = "Rimi";
+export const YOUR_SIGNOFF = "Your Biki";
 
 /* ── 2. THE LOCK ─────────────────────────────────────────────────────────── */
-/* Only she should be able to open this. Pick something only she'd know.     */
 
 export const LOCK = {
-  enabled: true, // set to false to remove the password screen entirely
-  password: "10082025", // the answer (spaces, slashes and case are ignored)
+  enabled: true,
+  password: "10082025",
   question: "The day i first said hi to you.",
   hint: "ddmmyyyy",
   wrongMessages: [
@@ -26,25 +25,23 @@ export const LOCK = {
 };
 
 /* ── 3. OUR SONG ─────────────────────────────────────────────────────────── */
-/* Put an mp3 file in the `public` folder and name it song.mp3.             */
-/* If there's no file, the music button just quietly disappears.            */
 
 export const SONG = {
   file: "/audio/Finding Her.mp3",
   title: "our song",
-  volume: 0.32, // 0 to 1
-  autoplay: true, // starts the moment she unlocks the page
+  volume: 0.32,
+  autoplay: true,
 };
 
 /* ── 4. WHEN IT ALL STARTED ──────────────────────────────────────────────── */
-/* Used for the live counter on the first screen.                           */
 
 export const START = "2025-08-10T21:14:00";
 export const START_LABEL = "counting since 9:14 pm, 10 august 2025";
 
 /* ── 5. OUR FOUR DATES ───────────────────────────────────────────────────── */
-/* x / y are the star positions in the constellation. Leave them alone      */
-/* unless you add or remove a date — then nudge them to taste (0–800, 0–400).*/
+/* Add your photos inside each milestone's photos array.                    */
+/* Put the image files in public/photos/ and reference them like:           */
+/* "/photos/filename.jpg"                                                   */
 
 export const MILESTONES = [
   {
@@ -54,6 +51,10 @@ export const MILESTONES = [
     where: "WhatsApp, two blue ticks",
     x: 92,
     y: 300,
+    emoji: "💬",
+    photos: [
+      // "/photos/hello-1.jpg",  ← add your photos here
+    ],
     text:
       "One message. That's genuinely all it took. I typed it, deleted it, typed it again, and hit send before I could talk myself out of it. You replied, and something in my chest went quiet in a way it hadn't in years. I didn't know it yet, but that little grey bubble on 10 August was the first day of the best thing that has ever happened to me.",
   },
@@ -64,6 +65,12 @@ export const MILESTONES = [
     where: "In person, finally",
     x: 252,
     y: 148,
+    emoji: "👀",
+    photos: [
+      "/photos/first day.jpeg"
+      // "/photos/meet-1.jpg",
+      // "/photos/meet-2.jpg",  ← multiple photos supported, dots appear below
+    ],
     text:
       "Fourteen days of talking, and then you walked in. I had imagined it about a hundred times and I still got it wrong, because nothing I imagined had your laugh in it. I remember thinking, very calmly and very clearly: oh no. Oh no, I'm going to love this person.",
   },
@@ -74,6 +81,10 @@ export const MILESTONES = [
     where: "Christmas Day",
     x: 470,
     y: 96,
+    emoji: "🎄",
+    photos: [
+      "/photos/first date.jpeg"
+    ],
     text:
       "Of every day in the year, we picked the one the whole world already keeps for the people it loves. You looked so beautiful I forgot half of what I'd planned to say. We stayed out longer than we meant to. Every Christmas from now on has a second meaning for me, and it's you.",
   },
@@ -84,13 +95,16 @@ export const MILESTONES = [
     where: "The very first page of the year",
     x: 690,
     y: 252,
+    emoji: "💋",
+    photos: [
+      // "/photos/kiss-1.jpg",
+    ],
     text:
       "A whole new year, and the first thing in it was you. I'm not going to try to describe it, because words go a bit useless around it. I'll just say this: whatever the rest of 2026 decides to do, it opened with the best moment of my life, and I got to be there for it.",
   },
 ];
 
 /* ── 6. THE SEALED LETTERS ───────────────────────────────────────────────── */
-/* Add as many as you like. Each `body` is a list of paragraphs.            */
 
 export const LETTERS = [
   {
@@ -137,7 +151,6 @@ export const LETTERS = [
 ];
 
 /* ── 7. THE LITTLE THINGS ────────────────────────────────────────────────── */
-/* Add as many as you want. The site counts them automatically.             */
 
 export const REASONS = [
   "The way you laugh a half-second before the funny part.",
@@ -166,24 +179,9 @@ export const REASONS = [
   "That out of everyone, you picked me back.",
 ];
 
-/* ── 8. OUR FIRST CONVERSATION ───────────────────────────────────────────── */
-/* Replace these with your REAL first messages. This is the part that will  */
-/* wreck her. from: "me" or "her". Use type: "voice" for a voice note.      */
-
-export const CHAT = [
-  { from: "me", text: "Hey 👋 I hope this isn't weird… I've been meaning to message you all day.", t: "9:14 pm" },
-  { from: "her", text: "not weird at all 😄 I was kind of hoping you would", t: "9:16 pm" },
-  { from: "me", text: "Okay good. I had a whole backup plan if you'd said it was weird.", t: "9:16 pm" },
-  { from: "her", text: "now I need to hear the backup plan", t: "9:17 pm" },
-  { from: "me", text: "Absolutely not. Ask me again in a year.", t: "9:17 pm" },
-  { from: "her", text: "a year 😏 confident", t: "9:18 pm" },
-  { from: "me", type: "voice", dur: "0:47", t: "9:22 pm" },
-  { from: "her", text: "okay. okay I'm smiling. this is your fault", t: "9:31 pm" },
-];
 
 /* ── 9. PHOTOS ───────────────────────────────────────────────────────────── */
 /* Drop images into public/photos/ then point to them here.                 */
-/* Leave src as null for a placeholder. tilt is the rotation in degrees.    */
 
 export const PHOTOS = [
   { src: "/photos/first day.jpeg", tilt: -4 },
@@ -220,47 +218,3 @@ export const FINALE = {
     "Fine. You win. I love you the most.",
   ],
 };
-
-
-export const MILESTONES = [
-  {
-    id: "hello",
-    date: "2025-08-10",
-    label: "The first hello",
-    where: "WhatsApp, two blue ticks",
-    x: 92, y: 300,
-    emoji: "💬",
-    photos: ["/photos/hello-1.jpg"], // ← add your photo paths here
-    text: "One message...",
-  },
-  {
-    id: "meet",
-    date: "2025-08-24",
-    label: "The first time I saw you",
-    where: "In person, finally",
-    x: 252, y: 148,
-    emoji: "👀",
-    photos: ["/photos/meet-1.jpg", "/photos/meet-2.jpg"], // ← multiple photos supported
-    text: "Fourteen days of talking...",
-  },
-  {
-    id: "date",
-    date: "2025-12-25",
-    label: "Our first date",
-    where: "Christmas Day",
-    x: 470, y: 96,
-    emoji: "🎄",
-    photos: ["/photos/date-1.jpg"],
-    text: "Of every day in the year...",
-  },
-  {
-    id: "kiss",
-    date: "2026-01-01",
-    label: "Our first kiss",
-    where: "The very first page of the year",
-    x: 690, y: 252,
-    emoji: "💋",
-    photos: ["/photos/kiss-1.jpg"],
-    text: "A whole new year...",
-  },
-];
